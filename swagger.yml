@@ -1,0 +1,218 @@
+swagger: "2.0"
+info:
+  description: REST interface to packer
+  title: packerd
+  version: 0.0.1
+consumes:
+- application/json
+produces:
+- application/json
+schemes:
+- http
+- https
+paths:
+  /build:
+    post:
+      description: trigger a packer build for a particular git repository
+      operationId: runBuild
+      tags:
+        - command
+      parameters:
+        - name: buildrequest
+          description: a representaion of the build request
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/buildrequest"
+      responses:
+        202:
+          description: Accepted the request. Returns a link to the queued build
+          schema:
+            $ref: "#/definitions/link"
+          examples:
+            application/json: |-
+              {
+                "link":
+                  {
+                    "rel": "self",
+                    "href": "/queue/{id}"
+                  }
+              }
+        400:
+          description: generic error response
+          schema:
+            $ref: "#/definitions/error"
+  /queue:
+    get:
+      description: get a list of links to all build status
+      operationId: getQueue
+      tags:
+        - informational
+      responses:
+        200:
+          description: list of links to the all queued builds
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/link"
+          examples:
+            application/json: |-
+              {
+                "link":
+                  {
+                    "rel": "self",
+                    "href": "/queue/{id}"
+                  }
+              }
+        400:
+          description: generic error response
+          schema:
+            $ref: "#/definitions/error"
+
+  /queue/{id}:
+    get:
+      description: get status of a specific queued build request
+      operationId: getQueueById
+      tags:
+        - informational
+      parameters:
+        - name: id
+          description: uuid for the build
+          in: path
+          type: string
+          required: true
+          minLength: 36
+          maxLength: 36
+      responses:
+        200:
+          description: returns a build status
+          schema:
+            $ref: "#/definitions/buildstatus"
+        400:
+          description: generic error response
+          schema:
+            $ref: "#/definitions/error"
+
+  /queue/{id}/buildlog:
+    get:
+      description: get the packer log of a specific queued build request
+      operationId: getPackerLogById
+      tags:
+        - informational
+      parameters:
+        - name: id
+          description: uuid for the build
+          in: path
+          type: string
+          required: true
+          minLength: 36
+          maxLength: 36
+      responses:
+        200:
+          description: returns a packer build log
+          schema:
+            $ref: "#/definitions/buildstatus"
+        400:
+          description: generic error response
+          schema:
+            $ref: "#/definitions/error"
+
+  /queue/{id}/testlog:
+    get:
+      description: get the kitchen test log from a specific queued build request
+      operationId: getQueueTestLogById
+      tags:
+        - informational
+      parameters:
+        - name: id
+          description: uuid for the build
+          in: path
+          type: string
+          required: true
+          minLength: 36
+          maxLength: 36
+      responses:
+        200:
+          description: returns the test kitchen run log
+          schema:
+            type: string
+        400:
+          description: generic error response
+          schema:
+            $ref: "#/definitions/error"
+
+  /health:
+    get:
+      tags:
+        - informational
+      responses:
+        200:
+          description: health of the service
+          schema:
+            $ref: "#/definitions/health"
+        default:
+          description: generic error response
+          schema:
+            $ref: "#/definitions/error"
+definitions:
+  error:
+    type: object
+    required:
+      - message
+    properties:
+      code:
+        type: integer
+        format: int64
+      message:
+        type: string
+  buildrequest:
+    required:
+      - giturl
+    properties:
+      giturl:
+        description: url to the git repo containing a packer config
+        type: string
+      templatepath:
+        description: path within the giturl repo to the packer config.  defaults to /packer.json
+        type: string
+      branch:
+        description: git branch checkout
+        type: string
+      commit:
+        description: git commit to checkout
+        type: string
+  link:
+    type: object
+    readOnly: true
+    properties:
+      rel:
+        type: string
+      href:
+        type: string
+        format: url
+  buildstatus:
+    type: object
+    properties:
+      status:
+        type: string
+      eta:
+        type: integer
+        format: int32
+        description: estimated seconds from now that the build will be completed.  Used to direct when you should check back
+      images:
+        type: array
+        items:
+          $ref: "#/definitions/link"
+      buildlog:
+        type: array
+        items:
+          $ref: "#/definitions/link"
+      testlog:
+        type: array
+        items:
+          $ref: "#/definitions/link"
+  health:
+    type: object
+    properties:
+      status:
+        type: string
