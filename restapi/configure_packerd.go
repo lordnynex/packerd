@@ -9,10 +9,11 @@ import (
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
 
+	"bytes"
 	"io/ioutil"
 	"log"
 	"os"
-	//"path/filepath"
+	
 
 	uuid "github.com/satori/go.uuid"
 
@@ -23,7 +24,13 @@ import (
 	"github.com/tompscanlan/packerd/restapi/operations"
 	"github.com/tompscanlan/packerd/restapi/operations/command"
 	"github.com/tompscanlan/packerd/restapi/operations/informational"
+	"github.com/tompscanlan/packerd/worker"
 )
+
+var buildQueue = make(map[uuid.UUID]*models.Buildrequest)
+var logger = log.New(os.Stderr,
+	"debug: ",
+	log.Ldate|log.Ltime|log.Lshortfile)
 
 // This file is safe to edit. Once it exists it will not be overwritten
 
@@ -32,11 +39,6 @@ func configureFlags(api *operations.PackerdAPI) {
 }
 
 func configureAPI(api *operations.PackerdAPI) http.Handler {
-	var logger = log.New(os.Stderr,
-		"debug: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
-
-	var buildQueue = make(map[uuid.UUID]*models.Buildstatus)
 
 	// configure the api here
 	api.ServeError = errors.ServeError
@@ -45,16 +47,15 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
+	// /health
 	api.InformationalGetHealthHandler = informational.GetHealthHandlerFunc(func() middleware.Responder {
 		var health = informational.NewGetHealthOK()
 		var pl = new(models.Health)
 		pl.Status = "OK"
-		health.SetPayload(pl)
-		return health
+
+		return health.WithPayload(pl)
 	})
-	api.InformationalGetPackerLogByIDHandler = informational.GetPackerLogByIDHandlerFunc(func(params informational.GetPackerLogByIDParams) middleware.Responder {
-		return middleware.NotImplemented("operation informational.GetPackerLogByID has not yet been implemented")
-	})
+
 	api.InformationalGetQueueHandler = informational.GetQueueHandlerFunc(func() middleware.Responder {
 		var links []*models.Link
 
@@ -66,13 +67,14 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 		}
 		return informational.NewGetQueueOK().WithPayload(links)
 	})
+
 	api.InformationalGetQueueByIDHandler = informational.GetQueueByIDHandlerFunc(func(params informational.GetQueueByIDParams) middleware.Responder {
 
 		id, err := uuid.FromString(params.ID)
 		if err != nil {
 			var resp = new(models.Error)
 			resp.Code = 3
-			*resp.Message = "invalid uuid"
+			*resp.Message = "invalid or missing uuid"
 
 			return informational.NewGetQueueByIDBadRequest().WithPayload(resp)
 		}
@@ -80,8 +82,8 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 		status, ok := buildQueue[id]
 		if !ok {
 			var err = new(models.Error)
-			err.Code = 1
-			*err.Message = "no git url"
+			err.Code = 4
+			*err.Message = "non-existiant build"
 
 			return informational.NewGetQueueByIDBadRequest().WithPayload(err)
 		}
@@ -91,46 +93,61 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 		return informational.NewGetQueueByIDOK().WithPayload(status)
 
 	})
+
+	// /queue/{id}/buildlog
+	api.InformationalGetPackerLogByIDHandler = informational.GetPackerLogByIDHandlerFunc(func(params informational.GetPackerLogByIDParams) middleware.Responder {
+
+		request, err := idToBuildRequest(params.ID)
+
+		if err.Message != nil {
+			return informational.NewGetPackerLogByIDBadRequest().WithPayload(err)
+		}
+		return informational.NewGetPackerLogByIDOK().WithPayload(request.Status)
+
+	})
+
 	api.InformationalGetQueueTestLogByIDHandler = informational.GetQueueTestLogByIDHandlerFunc(func(params informational.GetQueueTestLogByIDParams) middleware.Responder {
 		return middleware.NotImplemented("operation informational.GetQueueTestLogByID has not yet been implemented")
 	})
+
 	api.CommandRunBuildHandler = command.RunBuildHandlerFunc(func(params command.RunBuildParams) middleware.Responder {
 
-		if *params.Buildrequest.Giturl == "" {
-			var err = new(models.Error)
-			err.Code = 1
-			*err.Message = "no git url"
+		var error = new(models.Error)
+		var id = uuid.NewV4()
 
-			return command.NewRunBuildBadRequest().WithPayload(err)
+		buildQueue[id] = params.Buildrequest
+
+		if *buildQueue[id].Giturl == "" {
+			error.Code = 1
+			*error.Message = "no git url"
+			return command.NewRunBuildBadRequest().WithPayload(error)
 		}
 
 		dir, err := ioutil.TempDir("", "packerd")
 		if err != nil {
-			logger.Fatal(err)
+			logger.Println(err)
+			error.Code = 400
+			*error.Message = err.Error()
+			return command.NewRunBuildBadRequest().WithPayload(error)
 		}
-		defer os.RemoveAll(dir) // clean up
-		logger.Printf("gotcha url right here %s", *params.Buildrequest.Giturl)
+		buildQueue[id].Localpath = dir
 
-		var cmd = "git"
-		var cmdOut []byte
-
-		var args = []string{"clone", *params.Buildrequest.Giturl, dir}
-		if cmdOut, err = exec.Command(cmd, args...).Output(); err != nil {
-			var resp = new(models.Error)
-			resp.Code = 2
-			*resp.Message = "failed to clone"
-
-			logger.Println("There was an error running git clone command: ", err, cmdOut)
-			return command.NewRunBuildBadRequest().WithPayload(resp)
-
-		}
-		logger.Println(cmdOut)
-		var id = uuid.NewV4()
-		buildQueue[id] = new(models.Buildstatus)
+		//error = runGitClone(*buildQueue[id].Giturl, buildQueue[id].Localpath)
+	
+		
+		//if *error.Message != "" {
+		//return command.NewRunBuildBadRequest().WithPayload(error)
+		//}
 
 		var link = new(models.Link)
 		link.Rel = "status"
 		link.Href = fmt.Sprintf("/queue/%s", id)
+
+		error = runPacker(buildQueue[id])
+		//if *error.Message != "" {
+		//	return command.NewRunBuildBadRequest().WithPayload(error)
+		//}
+
 		return command.NewRunBuildAccepted().WithPayload(link)
 		//return middleware.NotImplemented(*params.Buildrequest.Giturl)
 	})
@@ -161,4 +178,90 @@ func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	//	return recovery(handler)
 	return handler
 
+}
+
+func idToBuildRequest(id string) (*models.Buildrequest, *models.Error) {
+
+	var error = new(models.Error)
+	var bs = new(models.Buildrequest)
+
+	if id == "" {
+		error.Code = 5
+		*error.Message = "missing uuid"
+		return bs, error
+	}
+
+	uuid, err := uuid.FromString(id)
+	if err != nil {
+		error.Code = 3
+		*error.Message = "invalid uuid"
+		return bs, error
+	}
+
+	request, ok := buildQueue[uuid]
+	if !ok {
+		error.Code = 4
+		*error.Message = "non-existiant build"
+
+		return bs, error
+	}
+
+	return request, nil
+}
+
+func runPacker(br *models.Buildrequest) *models.Error {
+	var error = new(models.Error)
+	var bin = "packer"
+	var args = []string{"build", "-machine-readable"}
+
+	if br.Templatepath != "" {
+		args = append(args, br.Templatepath)
+	}
+
+	cmd := exec.Command(bin, args...)
+	cmd.Dir = br.Localpath
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		logger.Println(err)
+		logger.Println("packer:" + stdout.String() + stderr.String())
+
+		error.Code = 400
+		//		error.Message = "Failed to clone: " + stderr.String()
+
+		return error
+	}
+	logger.Println("packer:" + stdout.String() + stderr.String())
+
+	return error
+}
+
+func runGitClone(url string, dir string) *models.Error {
+	var error = new(models.Error)
+	var bin = "git"
+	var args = []string{"clone", url, dir}
+
+	cmd := exec.Command(bin, args...)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		logger.Println(err)
+
+		error.Code = 400
+		*error.Message = "Failed to clone: " + err.Error() + ":" + stderr.String()
+
+		return error
+	}
+	logger.Println("git clone:" + stdout.String() + stderr.String())
+	return error
 }

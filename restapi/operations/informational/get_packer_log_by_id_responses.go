@@ -18,7 +18,7 @@ swagger:response getPackerLogByIdOK
 type GetPackerLogByIDOK struct {
 
 	// In: body
-	Payload *models.Buildstatus `json:"body,omitempty"`
+	Payload string `json:"body,omitempty"`
 }
 
 // NewGetPackerLogByIDOK creates GetPackerLogByIDOK with default headers values
@@ -27,13 +27,13 @@ func NewGetPackerLogByIDOK() *GetPackerLogByIDOK {
 }
 
 // WithPayload adds the payload to the get packer log by Id o k response
-func (o *GetPackerLogByIDOK) WithPayload(payload *models.Buildstatus) *GetPackerLogByIDOK {
+func (o *GetPackerLogByIDOK) WithPayload(payload string) *GetPackerLogByIDOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get packer log by Id o k response
-func (o *GetPackerLogByIDOK) SetPayload(payload *models.Buildstatus) {
+func (o *GetPackerLogByIDOK) SetPayload(payload string) {
 	o.Payload = payload
 }
 
@@ -41,11 +41,10 @@ func (o *GetPackerLogByIDOK) SetPayload(payload *models.Buildstatus) {
 func (o *GetPackerLogByIDOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.WriteHeader(200)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
+	if err := producer.Produce(rw, o.Payload); err != nil {
+		panic(err) // let the recovery middleware deal with this
 	}
+
 }
 
 /*GetPackerLogByIDBadRequest generic error response

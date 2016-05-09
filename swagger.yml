@@ -87,7 +87,7 @@ paths:
         200:
           description: returns a build status
           schema:
-            $ref: "#/definitions/buildstatus"
+            $ref: "#/definitions/buildrequest"
         400:
           description: generic error response
           schema:
@@ -111,7 +111,7 @@ paths:
         200:
           description: returns a packer build log
           schema:
-            $ref: "#/definitions/buildstatus"
+            type: string
         400:
           description: generic error response
           schema:
@@ -143,6 +143,8 @@ paths:
 
   /health:
     get:
+      operationId: getHealth
+      description: get health of the service
       tags:
         - informational
       responses:
@@ -181,6 +183,27 @@ definitions:
       commit:
         description: git commit to checkout
         type: string
+      buildlog:
+        description: build log file
+        type: string
+      testlog:
+        description: build log file
+        type: string
+      images:
+        description: links to artifacts
+        type: array
+        items:
+          $ref: "#/definitions/link"
+      status:
+        description: status of the build
+        type: string
+      eta:
+        description: estimated seconds from now that the build will be completed.  Used to direct when you should check back
+        type: integer
+        format: int32
+      localpath:
+        description: not settable
+        type: string
   link:
     type: object
     readOnly: true
@@ -190,27 +213,6 @@ definitions:
       href:
         type: string
         format: url
-  buildstatus:
-    type: object
-    properties:
-      status:
-        type: string
-      eta:
-        type: integer
-        format: int32
-        description: estimated seconds from now that the build will be completed.  Used to direct when you should check back
-      images:
-        type: array
-        items:
-          $ref: "#/definitions/link"
-      buildlog:
-        type: array
-        items:
-          $ref: "#/definitions/link"
-      testlog:
-        type: array
-        items:
-          $ref: "#/definitions/link"
   health:
     type: object
     properties:

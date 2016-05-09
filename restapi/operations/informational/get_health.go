@@ -29,7 +29,7 @@ func NewGetHealth(ctx *middleware.Context, handler GetHealthHandler) *GetHealth 
 
 /*GetHealth swagger:route GET /health informational getHealth
 
-GetHealth get health API
+get health of the service
 
 */
 type GetHealth struct {

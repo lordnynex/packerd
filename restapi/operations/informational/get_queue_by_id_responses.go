@@ -18,7 +18,7 @@ swagger:response getQueueByIdOK
 type GetQueueByIDOK struct {
 
 	// In: body
-	Payload *models.Buildstatus `json:"body,omitempty"`
+	Payload *models.Buildrequest `json:"body,omitempty"`
 }
 
 // NewGetQueueByIDOK creates GetQueueByIDOK with default headers values
@@ -27,13 +27,13 @@ func NewGetQueueByIDOK() *GetQueueByIDOK {
 }
 
 // WithPayload adds the payload to the get queue by Id o k response
-func (o *GetQueueByIDOK) WithPayload(payload *models.Buildstatus) *GetQueueByIDOK {
+func (o *GetQueueByIDOK) WithPayload(payload *models.Buildrequest) *GetQueueByIDOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get queue by Id o k response
-func (o *GetQueueByIDOK) SetPayload(payload *models.Buildstatus) {
+func (o *GetQueueByIDOK) SetPayload(payload *models.Buildrequest) {
 	o.Payload = payload
 }
 
