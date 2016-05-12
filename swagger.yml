@@ -171,6 +171,9 @@ definitions:
     required:
       - giturl
     properties:
+      id:
+        description: uuid of this request
+        type: string
       giturl:
         description: url to the git repo containing a packer config
         type: string

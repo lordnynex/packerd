@@ -39,6 +39,10 @@ type Buildrequest struct {
 	*/
 	Giturl *string `json:"giturl"`
 
+	/* uuid of this request
+	 */
+	ID string `json:"id,omitempty"`
+
 	/* links to artifacts
 	 */
 	Images []*Link `json:"images,omitempty"`

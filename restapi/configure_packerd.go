@@ -3,34 +3,20 @@ package restapi
 import (
 	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	errors "github.com/go-openapi/errors"
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
 
-	"bytes"
-	"io/ioutil"
-	"log"
-	"os"
-	
-
-	uuid "github.com/satori/go.uuid"
-
-	"os/exec"
-
+	"github.com/tompscanlan/packerd"
 	"github.com/tompscanlan/packerd/models"
 
 	"github.com/tompscanlan/packerd/restapi/operations"
 	"github.com/tompscanlan/packerd/restapi/operations/command"
 	"github.com/tompscanlan/packerd/restapi/operations/informational"
-	"github.com/tompscanlan/packerd/worker"
 )
-
-var buildQueue = make(map[uuid.UUID]*models.Buildrequest)
-var logger = log.New(os.Stderr,
-	"debug: ",
-	log.Ldate|log.Ltime|log.Lshortfile)
 
 // This file is safe to edit. Once it exists it will not be overwritten
 
@@ -39,6 +25,10 @@ func configureFlags(api *operations.PackerdAPI) {
 }
 
 func configureAPI(api *operations.PackerdAPI) http.Handler {
+
+	fmt.Println("Starting the dispatcher")
+
+	packerd.StartDispatcher(5)
 
 	// configure the api here
 	api.ServeError = errors.ServeError
@@ -59,7 +49,7 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 	api.InformationalGetQueueHandler = informational.GetQueueHandlerFunc(func() middleware.Responder {
 		var links []*models.Link
 
-		for key, _ := range buildQueue {
+		for key, _ := range packerd.BuildQ {
 			var link = new(models.Link)
 			link.Rel = "status"
 			link.Href = fmt.Sprintf("/queue/%s", key)
@@ -70,34 +60,23 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 
 	api.InformationalGetQueueByIDHandler = informational.GetQueueByIDHandlerFunc(func(params informational.GetQueueByIDParams) middleware.Responder {
 
-		id, err := uuid.FromString(params.ID)
-		if err != nil {
-			var resp = new(models.Error)
-			resp.Code = 3
-			*resp.Message = "invalid or missing uuid"
-
-			return informational.NewGetQueueByIDBadRequest().WithPayload(resp)
-		}
-
-		status, ok := buildQueue[id]
-		if !ok {
+		br, bqerr := packerd.BuildQ.LookUp(params.ID)
+		if bqerr != nil {
 			var err = new(models.Error)
 			err.Code = 4
-			*err.Message = "non-existiant build"
+			*err.Message = "non-existiant build request"
 
 			return informational.NewGetQueueByIDBadRequest().WithPayload(err)
 		}
 
-		status.Eta = 30
-		status.Status = "pending"
-		return informational.NewGetQueueByIDOK().WithPayload(status)
+		return informational.NewGetQueueByIDOK().WithPayload(br)
 
 	})
 
 	// /queue/{id}/buildlog
 	api.InformationalGetPackerLogByIDHandler = informational.GetPackerLogByIDHandlerFunc(func(params informational.GetPackerLogByIDParams) middleware.Responder {
 
-		request, err := idToBuildRequest(params.ID)
+		request, err := packerd.BuildQ.LookUp(params.ID)
 
 		if err.Message != nil {
 			return informational.NewGetPackerLogByIDBadRequest().WithPayload(err)
@@ -112,47 +91,46 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 
 	api.CommandRunBuildHandler = command.RunBuildHandlerFunc(func(params command.RunBuildParams) middleware.Responder {
 
-		var error = new(models.Error)
-		var id = uuid.NewV4()
-
-		buildQueue[id] = params.Buildrequest
-
-		if *buildQueue[id].Giturl == "" {
-			error.Code = 1
-			*error.Message = "no git url"
-			return command.NewRunBuildBadRequest().WithPayload(error)
+		params.Buildrequest.Status = "Pending"
+		id, bqerr := packerd.BuildQ.Add(params.Buildrequest)
+		if bqerr != nil {
+			packerd.Logger.Println(bqerr)
+			return command.NewRunBuildBadRequest().WithPayload(bqerr)
 		}
+		packerd.Logger.Printf("added new build request %s", id)
+
+		params.Buildrequest.ID = id
+
+		packerd.Logger.Printf("build request: %v", params.Buildrequest)
 
 		dir, err := ioutil.TempDir("", "packerd")
 		if err != nil {
-			logger.Println(err)
-			error.Code = 400
-			*error.Message = err.Error()
-			return command.NewRunBuildBadRequest().WithPayload(error)
+			packerd.Logger.Println(err)
+			bqerr.Code = 400
+			*bqerr.Message = err.Error()
+			return command.NewRunBuildBadRequest().WithPayload(bqerr)
 		}
-		buildQueue[id].Localpath = dir
+		params.Buildrequest.Localpath = dir
+		packerd.Logger.Printf("got safe local working dir: %s", params.Buildrequest.Localpath)
 
-		//error = runGitClone(*buildQueue[id].Giturl, buildQueue[id].Localpath)
-	
-		
-		//if *error.Message != "" {
-		//return command.NewRunBuildBadRequest().WithPayload(error)
-		//}
+		packerd.WorkQueue <- params.Buildrequest
+		packerd.Logger.Println("pushed a build request")
 
 		var link = new(models.Link)
 		link.Rel = "status"
 		link.Href = fmt.Sprintf("/queue/%s", id)
 
-		error = runPacker(buildQueue[id])
-		//if *error.Message != "" {
-		//	return command.NewRunBuildBadRequest().WithPayload(error)
-		//}
-
 		return command.NewRunBuildAccepted().WithPayload(link)
-		//return middleware.NotImplemented(*params.Buildrequest.Giturl)
+
 	})
 
-	api.ServerShutdown = func() {}
+	api.ServerShutdown = func() {
+		bqerr := packerd.BuildQ.Store("serverdata.json")
+		if bqerr != nil {
+			packerd.Logger.Printf("failed to store json: %s", *bqerr.Message)
+
+		}
+	}
 
 	return setupGlobalMiddleware(api.Serve(setupMiddlewares))
 }
@@ -178,90 +156,4 @@ func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	//	return recovery(handler)
 	return handler
 
-}
-
-func idToBuildRequest(id string) (*models.Buildrequest, *models.Error) {
-
-	var error = new(models.Error)
-	var bs = new(models.Buildrequest)
-
-	if id == "" {
-		error.Code = 5
-		*error.Message = "missing uuid"
-		return bs, error
-	}
-
-	uuid, err := uuid.FromString(id)
-	if err != nil {
-		error.Code = 3
-		*error.Message = "invalid uuid"
-		return bs, error
-	}
-
-	request, ok := buildQueue[uuid]
-	if !ok {
-		error.Code = 4
-		*error.Message = "non-existiant build"
-
-		return bs, error
-	}
-
-	return request, nil
-}
-
-func runPacker(br *models.Buildrequest) *models.Error {
-	var error = new(models.Error)
-	var bin = "packer"
-	var args = []string{"build", "-machine-readable"}
-
-	if br.Templatepath != "" {
-		args = append(args, br.Templatepath)
-	}
-
-	cmd := exec.Command(bin, args...)
-	cmd.Dir = br.Localpath
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-	if err != nil {
-		logger.Println(err)
-		logger.Println("packer:" + stdout.String() + stderr.String())
-
-		error.Code = 400
-		//		error.Message = "Failed to clone: " + stderr.String()
-
-		return error
-	}
-	logger.Println("packer:" + stdout.String() + stderr.String())
-
-	return error
-}
-
-func runGitClone(url string, dir string) *models.Error {
-	var error = new(models.Error)
-	var bin = "git"
-	var args = []string{"clone", url, dir}
-
-	cmd := exec.Command(bin, args...)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-	if err != nil {
-		logger.Println(err)
-
-		error.Code = 400
-		*error.Message = "Failed to clone: " + err.Error() + ":" + stderr.String()
-
-		return error
-	}
-	logger.Println("git clone:" + stdout.String() + stderr.String())
-	return error
 }

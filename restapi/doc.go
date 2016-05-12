@@ -4,8 +4,8 @@ REST interface to packer
 
 
     Schemes:
-      http
       https
+      http
     Host: localhost
     BasePath: /
     Version: 0.0.1
