@@ -1,0 +1,266 @@
+{
+  "variables": {
+    "version": "0.90",
+    "http_proxy": "{{env `http_proxy`}}",
+    "https_proxy": "{{env `https_proxy`}}",
+    "ftp_proxy": "{{env `ftp_proxy`}}",
+    "no_proxy": "{{env `no_proxy`}}",
+    "org": "tompscanlan",
+    "role": "packerd",
+    "docker_repo_username": "{{env `docker_repo_username`}}",
+    "docker_repo_password": "{{env `docker_repo_password`}}",
+    "docker_repo_server": "{{env `docker_repo_server`}}",
+    "docker_repo_email": "{{env `docker_repo_email`}}",
+    "chef_log_level": "{{env `chef_log_level`}}"
+  },
+  "builders": [
+    {
+      "name": "ubuntu-docker",
+      "type": "docker",
+      "image": "ubuntu:trusty",
+      "commit": true
+    },
+    {
+      "name": "alpine-docker",
+      "type": "docker",
+      "image": "docker:dind",
+      "commit": true,
+      "run_command": [
+        "-d",
+        "-i",
+        "-t",
+        "{{.Image}}",
+        "/bin/sh"
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "packer/scripts/base_setup.sh",
+        "packer/scripts/vagrant.sh",
+        "packer/scripts/host_tools.sh"
+      ],
+      "environment_vars": [
+        "http_proxy={{user `http_proxy`}}",
+        "https_proxy={{user `https_proxy`}}",
+        "ftp_proxy={{user `ftp_proxy`}}",
+        "no_proxy={{user `no_proxy`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "packer/scripts/add_ansible.sh"
+      ],
+      "environment_vars": [
+        "http_proxy={{user `http_proxy`}}",
+        "https_proxy={{user `https_proxy`}}",
+        "ftp_proxy={{user `ftp_proxy`}}",
+        "no_proxy={{user `no_proxy`}}"
+      ],
+      "only": [
+        "alpine-docker"
+      ]
+    },
+    {
+      "type": "chef-solo",
+      "cookbook_paths": [
+        "provision/chef/cookbooks",
+        "provision/chef/vendor-cookbooks"
+      ],
+      "data_bags_path": "provision/chef/data_bags",
+      "roles_path": "provision/chef/roles",
+      "json": {
+        "http_proxy": "{{user `http_proxy`}}",
+        "https_proxy": "{{user `https_proxy`}}",
+        "ftp_proxy": "{{user `ftp_proxy`}}",
+        "no_proxy": "{{user `no_proxy`}}"
+      },
+      "run_list": [
+        "recipe[chef_solo_proxy]"
+      ],
+      "except": [
+        "alpine-docker"
+      ]
+    },
+    {
+      "type": "chef-solo",
+      "cookbook_paths": [
+        "provision/chef/cookbooks",
+        "provision/chef/vendor-cookbooks"
+      ],
+      "data_bags_path": "provision/chef/data_bags",
+      "roles_path": "provision/chef/roles",
+      "run_list": [
+        "role[docker-opspipeline-{{user `role`}}]"
+      ],
+      "only": [
+        "ubuntu-docker"
+      ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "provision/ansible/playbooks/local.yml",
+      "only": [
+        "alpine-docker"
+      ]
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "packer/scripts/sanitize.sh"
+      ],
+      "environment_vars": [
+        "http_proxy={{user `http_proxy`}}",
+        "https_proxy={{user `https_proxy`}}",
+        "ftp_proxy={{user `ftp_proxy`}}",
+        "no_proxy={{user `no_proxy`}}"
+      ]
+    },
+    {
+      "type": "chef-solo",
+      "cookbook_paths": [
+        "provision/chef/cookbooks",
+        "provision/chef/vendor-cookbooks"
+      ],
+      "data_bags_path": "provision/chef/data_bags",
+      "roles_path": "provision/chef/roles",
+      "json": {
+        "http_proxy": null,
+        "https_proxy": null,
+        "ftp_proxy": null,
+        "no_proxy": null
+      },
+      "run_list": [
+        "recipe[chef_solo_proxy]"
+      ],
+      "except": [
+        "alpine-docker"
+      ]
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "type": "docker-save",
+        "path": "{{user `org`}}-ubuntu-{{user `role`}}-{{user `version`}}.tar",
+        "only": [
+          "ubuntu-docker"
+        ]
+      }
+    ],
+    [
+      {
+        "type": "docker-save",
+        "path": "{{user `org`}}-alpine-{{user `role`}}-{{user `version`}}.tar",
+        "only": [
+          "alpine-docker"
+        ]
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
+        "tag": "{{user `version`}}",
+        "force": true,
+        "only": [
+          "ubuntu-docker"
+        ]
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_email": "{{user `docker_repo_email`}}",
+        "login_username": "{{user `docker_repo_username`}}",
+        "login_password": "{{user `docker_repo_password`}}",
+        "login_server": "{{user `docker_repo_server`}}",
+        "only": [
+          "ubuntu-docker"
+        ]
+      },
+      {
+        "type": "docker-save",
+        "path": "{{user `org`}}-ubuntu-{{user `role`}}-{{user `version`}}.tar",
+        "only": [
+          "ubuntu-docker"
+        ]
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
+        "tag": "latest",
+        "force": true,
+        "only": [
+          "ubuntu-docker"
+        ]
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_email": "{{user `docker_repo_email`}}",
+        "login_username": "{{user `docker_repo_username`}}",
+        "login_password": "{{user `docker_repo_password`}}",
+        "login_server": "{{user `docker_repo_server`}}",
+        "only": [
+          "ubuntu-docker"
+        ]
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "{{user `org`}}/alpine-{{user `role`}}",
+        "tag": "{{user `version`}}",
+        "force": true,
+        "only": [
+          "alpine-docker"
+        ]
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_email": "{{user `docker_repo_email`}}",
+        "login_username": "{{user `docker_repo_username`}}",
+        "login_password": "{{user `docker_repo_password`}}",
+        "login_server": "{{user `docker_repo_server`}}",
+        "only": [
+          "alpine-docker"
+        ]
+      },
+      {
+        "type": "docker-save",
+        "path": "{{user `org`}}-alpine-{{user `role`}}-{{user `version`}}.tar",
+        "only": [
+          "alpine-docker"
+        ]
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "{{user `org`}}/alpine-{{user `role`}}",
+        "tag": "latest",
+        "force": true,
+        "only": [
+          "alpine-docker"
+        ]
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_email": "{{user `docker_repo_email`}}",
+        "login_username": "{{user `docker_repo_username`}}",
+        "login_password": "{{user `docker_repo_password`}}",
+        "login_server": "{{user `docker_repo_server`}}",
+        "only": [
+          "alpine-docker"
+        ]
+      }
+    ]
+  ]
+}
