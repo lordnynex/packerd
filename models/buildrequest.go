@@ -25,6 +25,14 @@ type Buildrequest struct {
 	 */
 	Buildlog string `json:"buildlog,omitempty"`
 
+	/* only build the given builds by name, comma seperated
+	 */
+	Buildonly string `json:"buildonly,omitempty"`
+
+	/* buildvars
+	 */
+	Buildvars Variables `json:"buildvars,omitempty"`
+
 	/* git commit to checkout
 	 */
 	Commit string `json:"commit,omitempty"`

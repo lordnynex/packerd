@@ -2,7 +2,10 @@ package packerd
 
 import (
 	"bytes"
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	//"strings"
 	//"runtime"
 
@@ -54,13 +57,21 @@ func (w *Worker) RunGitClone(br *models.Buildrequest) error {
 	return nil
 }
 
-func (w *Worker) RunPacker(br *models.Buildrequest) {
+func (w *Worker) RunPacker(br *models.Buildrequest) error {
 
 	args := []string{"build", "-machine-readable"}
+
+	if br.Buildonly != "" {
+		args = append(args, fmt.Sprintf("-only=%s", br.Buildonly))
+	}
+	for _, v := range br.Buildvars {
+		args = append(args, "-var", fmt.Sprintf("\"%s=%s\"", *v.Key, *v.Value))
+	}
+	// template must be last in command
 	if br.Templatepath != "" {
 		args = append(args, br.Templatepath)
 	}
-
+	Logger.Printf("packer command: %s %v", "packer", args)
 	cmd := exec.Command("packer", args...)
 	cmd.Dir = br.Localpath
 
@@ -79,6 +90,31 @@ func (w *Worker) RunPacker(br *models.Buildrequest) {
 		Logger.Printf("packer run done")
 	}
 	br.Buildlog = br.Buildlog + stdout.String() + stderr.String()
+	return err
+}
+
+func (w *Worker) RunBerks(br *models.Buildrequest) error {
+
+	args := []string{"vendor", "provision/chef/vendor-cookbooks"}
+	cmd := exec.Command("berks", args...)
+	cmd.Dir = br.Localpath
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	Logger.Printf("running berks to pull in chef recipes")
+	br.Status = "Berkshelf"
+	err := cmd.Run()
+	if err != nil {
+		br.Status = "Failed"
+		Logger.Printf("berks run failed")
+	} else {
+		br.Status = "Done"
+		Logger.Printf("berks run done")
+	}
+	br.Buildlog = br.Buildlog + stdout.String() + stderr.String()
+	return err
 }
 
 func (w *Worker) Start() {
@@ -90,19 +126,19 @@ func (w *Worker) Start() {
 			select {
 			case build := <-w.BuildRequest:
 				Logger.Printf("worker%d: got build request %s", w.Id, BuildRequestToString(*build))
-				//br, brerr := BuildQ.LookUp(build.ID)
-
-				//if brerr != nil {
-				//	Logger.Printf("worker%d: failed to look up %s", w.Id, build.ID)
-				//}
 
 				w.RunGitClone(build)
 				//br, brerr = BuildQ.Update(build.ID, br)
+
+				if _, err := os.Stat(filepath.Join(build.Localpath, "Berksfile")); err == nil {
+					w.RunBerks(build)
+				}
+
 				w.RunPacker(build)
 				//br, brerr = BuildQ.Update(build.ID, br)
 
 			case <-w.Done:
-				Logger.Printf("worker%d: done")
+				Logger.Printf("worker%d: done", w.Id)
 				return
 			}
 		}

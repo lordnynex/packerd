@@ -157,6 +157,22 @@ paths:
           schema:
             $ref: "#/definitions/error"
 definitions:
+  variable:
+    description: one set of key=value to be passed to the packer build
+    type: object
+    required:
+      - key
+      - value
+    properties:
+      key:
+       type: string
+      value:
+        type: string
+  variables:
+    description: list of vars
+    type: array
+    items:
+      $ref: '#/definitions/variable'
   error:
     type: object
     required:
@@ -174,6 +190,11 @@ definitions:
       id:
         description: uuid of this request
         type: string
+      buildonly:
+        type: string
+        description: only build the given builds by name, comma seperated
+      buildvars:
+        $ref: "#/definitions/variables"
       giturl:
         description: url to the git repo containing a packer config
         type: string

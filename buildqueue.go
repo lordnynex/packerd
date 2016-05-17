@@ -23,13 +23,13 @@ func (bq *BuildQueue) LookUp(id string) (*models.Buildrequest, *models.Error) {
 	uuid, err := uuid.FromString(id)
 	if err != nil {
 		msg := "invalid uuid string: " + err.Error()
-		return nil, &models.Error{100, &msg}
+		return nil, &models.Error{Code: 100, Message: &msg}
 	}
 
 	request, ok := (*bq)[uuid.String()]
 	if !ok {
 		msg := "no key for uuid: " + uuid.String()
-		return nil, &models.Error{100, &msg}
+		return nil, &models.Error{Code: 100, Message: &msg}
 	}
 	return request, nil
 }
@@ -47,7 +47,7 @@ func (bq *BuildQueue) Update(id string, br *models.Buildrequest) (*models.Buildr
 	request, ok := (*bq)[id]
 	if !ok {
 		msg := "no key for uuid: " + id
-		return nil, &models.Error{100, &msg}
+		return nil, &models.Error{Code: 100, Message: &msg}
 	}
 	request = br
 	return request, nil
@@ -58,7 +58,7 @@ func (bq *BuildQueue) Delete(id string) *models.Error {
 	uuid, err := uuid.FromString(id)
 	if err != nil {
 		msg := "invalid uuid string: " + err.Error()
-		return &models.Error{100, &msg}
+		return &models.Error{Code: 100, Message: &msg}
 	}
 
 	delete(*bq, uuid.String())
@@ -71,14 +71,14 @@ func (bq *BuildQueue) Store(filename string) *models.Error {
 	if err != nil {
 		//panic(err)
 		msg := fmt.Sprintf("failed to marshal to json: %s", err.Error())
-		return &models.Error{100, &msg}
+		return &models.Error{Code: 100, Message: &msg}
 	}
 
 	err = ioutil.WriteFile(filename, b, 0644)
 	if err != nil {
 		//panic(err)
 		msg := fmt.Sprintf("failed write file: %s", err.Error())
-		return &models.Error{100, &msg}
+		return &models.Error{Code: 100, Message: &msg}
 	}
 
 	return nil
@@ -89,14 +89,14 @@ func (bq *BuildQueue) Load(filename string) *models.Error {
 	if err != nil {
 		//panic(err)
 		msg := fmt.Sprintf("failed read file: %s", err.Error())
-		return &models.Error{100, &msg}
+		return &models.Error{Code: 100, Message: &msg}
 	}
 
 	err = json.Unmarshal(blob, &bq)
 	if err != nil {
 		//panic(err)
 		msg := fmt.Sprintf("failed to unmarshal: %s", err.Error())
-		return &models.Error{100, &msg}
+		return &models.Error{Code: 100, Message: &msg}
 	}
 
 	return nil
