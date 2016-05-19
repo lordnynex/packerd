@@ -1,0 +1,49 @@
+{
+  "name": "opspipeline-headless",
+  "chef_type": "role",
+  "json_class": "Chef::Role",
+  "description": "The base role for a headless opspipeline",
+  "default_attributes": {
+    "apt": {
+      "compiletime": true,
+      "periodic_update_min_delay": 300
+    },
+    "docker_install": {
+      "log_level": "info"
+    },
+    "go": {
+      "scm": false,
+      "packages": [
+        "github.com/gorilla/context",
+        "github.com/naoina/denco",
+        "github.com/jessevdk/go-flags",
+        "github.com/tylerb/graceful",
+        "github.com/tompscanlan/packerd"
+      ]
+    },
+    "packages-cookbook": {
+        "bash": "install",
+        "sudo": "install",
+        "wget": "install",
+        "curl": "install",
+        "virt-what": "install",
+        "git": "install"
+    },
+    "packer": {
+      "version": "packer_0.10.1",
+      "raw_checksums": "7974c24313230dfe6a13a81332c3a2f5119d4c589ca3b7ead6decf4895486c71  packer_0.10.1_darwin_386.zip\nfac621bf1fb43f0cbbe52481c8dfda2948895ad52e022e46f00bc75c07a4f181  packer_0.10.1_darwin_amd64.zip\n951012ddd2564cfe1cf901b8486a36896f89d4c4e75b3ed85d6f9b49c06ac14e  packer_0.10.1_freebsd_386.zip\n170459ee7a1b2360f49a07ecffbadffe5407826f9514af10a25c3f19e1721e43  packer_0.10.1_freebsd_amd64.zip\n3360dad292c16d2893f6138edd33d6f8eba00f1985330ad797f80670b3032e2e  packer_0.10.1_freebsd_arm.zip\n9146b94115684a9725b2c1b5e5fbc412f30caaca136dbad4028423d6d6d3b6e4  packer_0.10.1_linux_386.zip\n7d51fc5db19d02bbf32278a8116830fae33a3f9bd4440a58d23ad7c863e92e28  packer_0.10.1_linux_amd64.zip\n1e110fb8ade48f959e426cf07603240fdc050d19ee8097e824459bf5e0638461  packer_0.10.1_linux_arm.zip\nb5a25296056ac6511a370e7357b3723de313bfc8ffcb8bd850d6ba8d77b8493e  packer_0.10.1_openbsd_386.zip\n255251a5dd93bba3c286b22b95ee9df63a1270c5c57c355263d0bebf692513da  packer_0.10.1_openbsd_amd64.zip\n9c3c3483a8b6dd6d116747bfcccbf6f530ffab9bb46b47d9a49bdcb92c145914  packer_0.10.1_windows_386.zip\n623013056dc662f29817dce6bd31e6fb669883a35ea9311951bbcea4eb9c59f7  packer_0.10.1_windows_amd64.zip\n1fb3b1382885f39c1f1f159fc7a6ef4be12d074c97fba76e0050d1990a990aed  packer_0.8.6_darwin_386.zip\n91b5e5d4524a7a2f09a07aad1c8e26e1200b47191a42c1b2facac4a27fd674d0  packer_0.8.6_darwin_amd64.zip\nc1eee9159a2b808a98392026b18b9b8d273dc7315729be223b872f244ee4a8a2  packer_0.8.6_freebsd_386.zip\nbd0dac59e22a490068f45e4d97a8e698637efca88c89caa7df764ea96bd7b718  packer_0.8.6_freebsd_amd64.zip\n4ca3827f70af25656dd3eff6ac442b0e62adc28d6ea1d56f47721189bb7d0453  packer_0.8.6_freebsd_arm.zip\nd1385af26ea42560ddc4f4958c88cb00c3e4a9f8a2d88a81c96b4bf1cb60369b  packer_0.8.6_linux_386.zip\n2f1ca794e51de831ace30792ab0886aca516bf6b407f6027e816ba7ca79703b5  packer_0.8.6_linux_amd64.zip\n958cbae3f99990946c1de9af238bf1760c3382f83c4975a32be54cfb0378d8d8  packer_0.8.6_linux_arm.zip\n009f30cf9f137429ca4dc2c175e0431a72f44ba3dd427cb8a173c68c7d3be7eb  packer_0.8.6_openbsd_386.zip\nbfab2f16a6b4f34e317d792ad97c3e879304dc8ae7866e70737f61ebfc8952a0  packer_0.8.6_openbsd_amd64.zip\n8d0bd037909206926d988b30e9336faf105dffe97c2924d455b28de437557c7f  packer_0.8.6_windows_386.zip\n786503f2ffe658c1b318af227eabb8c10f3f425608ad4ef709206757931b7eee  packer_0.8.6_windows_amd64.zip",
+      "url_base": "https://releases.hashicorp.com/packer/0.10.1"
+    },
+    "tz": "US/Eastern"
+  },
+  "run_list": [
+    "recipe[apt]",
+    "recipe[chef-dk]",
+    "recipe[packer]",
+    "recipe[golang]",
+    "recipe[golang::packages]",
+    "recipe[docker_install]",
+    "recipe[user::data_bag]",
+    "recipe[timezone_lwrp]"
+  ]
+}
