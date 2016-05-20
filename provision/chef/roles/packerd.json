@@ -12,7 +12,6 @@
       "log_level": "info"
     },
     "go": {
-      "scm": false,
       "packages": [
         "github.com/gorilla/context",
         "github.com/naoina/denco",
