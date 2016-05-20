@@ -7,8 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	//"strings"
-	//"runtime"
 
 	"github.com/tompscanlan/packerd/models"
 )
@@ -71,7 +69,7 @@ func (w *Worker) RunCmd(command string, args []string, dir string, status *strin
 	Logger.Printf("running command [%s %v]", command, args)
 	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
-	cmd.Env = new([]string{"PACKER_LOG=1"})
+	cmd.Env = []string{"PACKER_LOG=1"}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -122,14 +120,12 @@ func (w *Worker) Start() {
 				Logger.Printf("worker%d: got build request %s", w.Id, BuildRequestToString(*build))
 
 				w.RunGitClone(build)
-				//br, brerr = BuildQ.Update(build.ID, br)
 
 				if _, err := os.Stat(filepath.Join(build.Localpath, "Berksfile")); err == nil {
 					w.RunBerks(build)
 				}
 
 				w.RunPacker(build)
-				//br, brerr = BuildQ.Update(build.ID, br)
 
 			case <-w.Done:
 				Logger.Printf("worker%d: done", w.Id)
@@ -165,5 +161,4 @@ func StreamToString(reader io.Reader, s *string) {
 	if err := b.Err(); err != nil {
 		*s = *s + fmt.Sprintf("%v", err)
 	}
-
 }
