@@ -95,7 +95,7 @@ func (w *Worker) RunCmd(command string, args []string, dir string, status *strin
 
 	if err := cmd.Start(); err != nil {
 		*status = fmt.Sprintf("Failed %s", command)
-		Logger.Printf("packer run failed")
+		Logger.Printf("%s run failed: %s", command, err)
 		return err
 	}
 
@@ -151,7 +151,7 @@ func StreamToLog(reader io.Reader) {
 	}
 
 	if err := b.Err(); err != nil {
-		Logger.Panicln("reading standard input:", err)
+		Logger.Println("error reading:", err)
 	}
 }
 
