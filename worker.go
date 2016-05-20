@@ -71,6 +71,7 @@ func (w *Worker) RunCmd(command string, args []string, dir string, status *strin
 	Logger.Printf("running command [%s %v]", command, args)
 	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
+	cmd.Env = new([]string{"PACKER_LOG=1"})
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
