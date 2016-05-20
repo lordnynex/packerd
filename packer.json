@@ -1,6 +1,6 @@
 {
   "variables": {
-    "version": "0.90",
+    "version": "{{env `version`}}",
     "http_proxy": "{{env `http_proxy`}}",
     "https_proxy": "{{env `https_proxy`}}",
     "ftp_proxy": "{{env `ftp_proxy`}}",
@@ -63,8 +63,32 @@
       {
         "type": "docker-tag",
         "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
+        "tag": "{{user `version`}}",
+        "force": true
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_email": "{{user `docker_repo_email`}}",
+        "login_username": "{{user `docker_repo_username`}}",
+        "login_password": "{{user `docker_repo_password`}}",
+        "login_server": "{{user `docker_repo_server`}}"
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
         "tag": "latest",
         "force": true
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_email": "{{user `docker_repo_email`}}",
+        "login_username": "{{user `docker_repo_username`}}",
+        "login_password": "{{user `docker_repo_password`}}",
+        "login_server": "{{user `docker_repo_server`}}"
       }
     ]
   ]
