@@ -26,3 +26,5 @@ _testmain.go
 packerd-server
 temp.crt
 temp.key
+serverdata.json
+Berksfile.lock
