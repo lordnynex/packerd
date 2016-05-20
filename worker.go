@@ -1,8 +1,9 @@
 package packerd
 
 import (
-	"bytes"
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,89 +33,81 @@ func NewWorker(id int, workerqueue chan chan *models.Buildrequest) *Worker {
 }
 
 func (w *Worker) RunGitClone(br *models.Buildrequest) error {
-
 	args := []string{"clone", *br.Giturl, br.Localpath}
-	cmd := exec.Command("git", args...)
-	br.Status = "Checking Out"
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-
-	if err != nil {
-		br.Status = "Failed"
-		Logger.Printf("failed to git clone: %v", err)
-		return err
-	}
-
-	Logger.Printf("git clone: done")
-
-	br.Buildlog = stdout.String() + stderr.String()
-
-	br.Status = "Checked Out"
-	return nil
+	err := w.RunCmd("git", args, br.Localpath, &br.Status, &br.Buildlog)
+	return err
 }
 
 func (w *Worker) RunPacker(br *models.Buildrequest) error {
-
 	args := []string{"build", "-machine-readable"}
 
 	if br.Buildonly != "" {
 		args = append(args, fmt.Sprintf("-only=%s", br.Buildonly))
 	}
+
 	for _, v := range br.Buildvars {
 		args = append(args, "-var", fmt.Sprintf("\"%s=%s\"", *v.Key, *v.Value))
 	}
+
 	// template must be last in command
 	if br.Templatepath != "" {
 		args = append(args, br.Templatepath)
 	}
-	Logger.Printf("packer command: %s %v", "packer", args)
-	cmd := exec.Command("packer", args...)
-	cmd.Dir = br.Localpath
 
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	err := w.RunCmd("packer", args, br.Localpath, &br.Status, &br.Buildlog)
 
-	Logger.Printf("packer run starting: %v", BuildRequestToString(*br))
-	br.Status = "Started"
-	err := cmd.Run()
-	if err != nil {
-		br.Status = "Failed"
-		Logger.Printf("packer run failed")
-	} else {
-		br.Status = "Done"
-		Logger.Printf("packer run done")
-	}
-	br.Buildlog = br.Buildlog + stdout.String() + stderr.String()
 	return err
 }
 
 func (w *Worker) RunBerks(br *models.Buildrequest) error {
-
 	args := []string{"vendor", "provision/chef/vendor-cookbooks"}
-	cmd := exec.Command("berks", args...)
-	cmd.Dir = br.Localpath
+	err := w.RunCmd("berks", args, br.Localpath, &br.Status, &br.Buildlog)
 
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	Logger.Printf("running berks to pull in chef recipes")
-	br.Status = "Berkshelf"
-	err := cmd.Run()
-	if err != nil {
-		br.Status = "Failed"
-		Logger.Printf("berks run failed")
-	} else {
-		br.Status = "Done"
-		Logger.Printf("berks run done")
-	}
-	br.Buildlog = br.Buildlog + stdout.String() + stderr.String()
 	return err
+}
+
+func (w *Worker) RunCmd(command string, args []string, dir string, status *string, fulllog *string) error {
+
+	Logger.Printf("running command [%s %v]", command, args)
+	cmd := exec.Command(command, args...)
+	cmd.Dir = dir
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		*status = fmt.Sprintf("Failed %s", command)
+		Logger.Printf("%s run failed: %s", command, err)
+		return err
+	}
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		*status = fmt.Sprintf("Failed %s", command)
+		Logger.Printf("%s run failed: %s", command, err)
+		return err
+	}
+
+	// stream packer to logs and build status
+	go StreamToLog(stdout)
+	go StreamToLog(stderr)
+	go StreamToString(stdout, fulllog)
+
+	*status = fmt.Sprintf("Started %s", command)
+
+	if err := cmd.Start(); err != nil {
+		*status = fmt.Sprintf("Failed %s", command)
+		Logger.Printf("packer run failed")
+		return err
+	}
+
+	if err := cmd.Wait(); err != nil {
+		*status = fmt.Sprintf("Failed %s", command)
+		Logger.Printf("%s run failed: %s", command, err)
+		return err
+	}
+
+	*status = fmt.Sprintf("Completed %s", command)
+
+	return nil
 }
 
 func (w *Worker) Start() {
@@ -149,4 +142,27 @@ func (w *Worker) Stop() {
 	go func() {
 		w.Done <- true
 	}()
+}
+
+func StreamToLog(reader io.Reader) {
+	b := bufio.NewScanner(reader)
+	for b.Scan() {
+		Logger.Println(b.Text())
+	}
+
+	if err := b.Err(); err != nil {
+		Logger.Panicln("reading standard input:", err)
+	}
+}
+
+func StreamToString(reader io.Reader, s *string) {
+	b := bufio.NewScanner(reader)
+	for b.Scan() {
+		*s = *s + b.Text()
+	}
+
+	if err := b.Err(); err != nil {
+		*s = *s + fmt.Sprintf("%v", err)
+	}
+
 }
