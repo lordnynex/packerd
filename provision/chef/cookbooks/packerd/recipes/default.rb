@@ -1,5 +1,9 @@
-include_recipe 'supervisor'
 
+directory '/etc/supervisor' do
+  owner 'root'
+  group 'root'
+  recursive true
+end
 
 template '/bin/docker_run.sh' do
   source 'docker_run.sh.erb'

@@ -38,6 +38,7 @@
   },
   "run_list": [
     "recipe[apt]",
+    "recipe[packages]",
     "recipe[chef-dk]",
     "recipe[packer]",
     "recipe[packerd]",
