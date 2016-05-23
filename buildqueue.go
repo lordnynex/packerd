@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	log "github.com/Sirupsen/logrus"
+
 	uuid "github.com/satori/go.uuid"
 	"github.com/tompscanlan/packerd/models"
 )
@@ -37,20 +39,18 @@ func (bq *BuildQueue) LookUp(id string) (*models.Buildrequest, *models.Error) {
 func (bq *BuildQueue) Add(br *models.Buildrequest) (string, *models.Error) {
 	var id = uuid.NewV4()
 
+	_, ok := (*bq)[id.String()]
+	if ok {
+		msg := "duplicate add for uuid: " + id.String()
+		return id.String(), &models.Error{Code: 100, Message: &msg}
+	}
+
+	br.ID = id.String()
 	(*bq)[id.String()] = br
 
+	log.Debugf("for id: %q, Adding id: %q, %v", id, br.ID, *br)
+
 	return id.String(), nil
-
-}
-
-func (bq *BuildQueue) Update(id string, br *models.Buildrequest) (*models.Buildrequest, *models.Error) {
-	request, ok := (*bq)[id]
-	if !ok {
-		msg := "no key for uuid: " + id
-		return nil, &models.Error{Code: 100, Message: &msg}
-	}
-	request = br
-	return request, nil
 }
 
 func (bq *BuildQueue) Delete(id string) *models.Error {

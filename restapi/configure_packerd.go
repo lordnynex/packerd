@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
+
 	errors "github.com/go-openapi/errors"
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
@@ -94,27 +96,27 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 		params.Buildrequest.Status = "Pending"
 		id, bqerr := packerd.BuildQ.Add(params.Buildrequest)
 		if bqerr != nil {
-			packerd.Logger.Println(bqerr)
+			log.Println(bqerr)
 			return command.NewRunBuildBadRequest().WithPayload(bqerr)
 		}
-		packerd.Logger.Printf("added new build request %s", id)
+		log.Printf("added new build request %s", id)
 
 		params.Buildrequest.ID = id
 
-		packerd.Logger.Printf("build request: %v", params.Buildrequest)
+		log.Printf("build request: %v", params.Buildrequest)
 
 		dir, err := ioutil.TempDir("", "packerd")
 		if err != nil {
-			packerd.Logger.Println(err)
+			log.Println(err)
 			bqerr.Code = 400
 			*bqerr.Message = err.Error()
 			return command.NewRunBuildBadRequest().WithPayload(bqerr)
 		}
 		params.Buildrequest.Localpath = dir
-		packerd.Logger.Printf("got safe local working dir: %s", params.Buildrequest.Localpath)
+		log.Printf("got safe local working dir: %s", params.Buildrequest.Localpath)
 
 		packerd.WorkQueue <- params.Buildrequest
-		packerd.Logger.Println("pushed a build request")
+		log.Println("pushed a build request")
 
 		var link = new(models.Link)
 		link.Rel = "status"
@@ -127,7 +129,7 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 	api.ServerShutdown = func() {
 		bqerr := packerd.BuildQ.Store("serverdata.json")
 		if bqerr != nil {
-			packerd.Logger.Printf("failed to store json: %s", *bqerr.Message)
+			log.Printf("failed to store json: %s", *bqerr.Message)
 
 		}
 	}
