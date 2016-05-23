@@ -1,0 +1,14 @@
+{
+  "variables": {
+    "version": "0.90",
+    "role": "packerd",
+    "test": "{{env `test`}}",
+    "empty": null
+  },
+    "builders":[{
+        "type": "docker",
+        "image": "ubuntu",
+        "export_path": "{{user `role`}}-{{user `version`}}-{{user `test`}}-{{user `empty`}}.tar"
+    }]
+}
+

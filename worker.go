@@ -1,14 +1,20 @@
 package packerd
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/tompscanlan/packerd/models"
+)
+
+const (
+	Stopped  = 0
+	Stopping = 1
+	Started  = 2
 )
 
 type Worker struct {
@@ -16,6 +22,7 @@ type Worker struct {
 	Done         chan bool
 	BuildRequest chan *models.Buildrequest
 	WorkerQueue  chan chan *models.Buildrequest
+	State        int
 }
 
 func NewWorker(id int, workerqueue chan chan *models.Buildrequest) *Worker {
@@ -26,6 +33,7 @@ func NewWorker(id int, workerqueue chan chan *models.Buildrequest) *Worker {
 	worker.Done = make(chan bool)
 	worker.BuildRequest = make(chan *models.Buildrequest)
 	worker.WorkerQueue = workerqueue
+	worker.State = Stopped
 
 	return worker
 }
@@ -36,15 +44,25 @@ func (w *Worker) RunGitClone(br *models.Buildrequest) error {
 	return err
 }
 
-func (w *Worker) RunPacker(br *models.Buildrequest) error {
-	args := []string{"build", "-machine-readable"}
+func (w *Worker) RunPackerValidate(br *models.Buildrequest) error {
+	args := []string{"validate"}
+	err := w.RunPacker(args, br)
+	return err
+}
 
+func (w *Worker) RunPackerBuild(br *models.Buildrequest) error {
+	args := []string{"build", "-machine-readable"}
+	err := w.RunPacker(args, br)
+	return err
+}
+func (w *Worker) RunPacker(args []string, br *models.Buildrequest) error {
 	if br.Buildonly != "" {
 		args = append(args, fmt.Sprintf("-only=%s", br.Buildonly))
 	}
 
 	for _, v := range br.Buildvars {
-		args = append(args, "-var", fmt.Sprintf("\"%s=%s\"", *v.Key, *v.Value))
+		args = append(args, "-var", fmt.Sprintf("%s=%s", *v.Key, *v.Value))
+
 	}
 
 	// template must be last in command
@@ -66,22 +84,22 @@ func (w *Worker) RunBerks(br *models.Buildrequest) error {
 
 func (w *Worker) RunCmd(command string, args []string, dir string, status *string, fulllog *string) error {
 
-	Logger.Printf("running command [%s %v]", command, args)
+	log.Debugf("running command [%s %v]", command, args)
 	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
-	cmd.Env = []string{"PACKER_LOG=1"}
+	//cmd.Env = []string{"PACKER_LOG=1"}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		*status = fmt.Sprintf("Failed %s", command)
-		Logger.Printf("%s run failed: %s", command, err)
+		log.Errorf("%s run failed: %s", command, err)
 		return err
 	}
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		*status = fmt.Sprintf("Failed %s", command)
-		Logger.Printf("%s run failed: %s", command, err)
+		log.Errorf("%s run failed: %s", command, err)
 		return err
 	}
 
@@ -94,13 +112,13 @@ func (w *Worker) RunCmd(command string, args []string, dir string, status *strin
 
 	if err := cmd.Start(); err != nil {
 		*status = fmt.Sprintf("Failed %s", command)
-		Logger.Printf("%s run failed: %s", command, err)
+		log.Errorf("%s run failed: %s", command, err)
 		return err
 	}
 
 	if err := cmd.Wait(); err != nil {
 		*status = fmt.Sprintf("Failed %s", command)
-		Logger.Printf("%s run failed: %s", command, err)
+		log.Errorf("%s run failed: %s", command, err)
 		return err
 	}
 
@@ -110,14 +128,18 @@ func (w *Worker) RunCmd(command string, args []string, dir string, status *strin
 }
 
 func (w *Worker) Start() {
+	w.State = Started
+
 	go func() {
 		for {
+			// put our channel onto the queue.
+			// dispatcher will shift it off, and send work down it
+			// Re-add after doing the job
 			w.WorkerQueue <- w.BuildRequest
-			Logger.Printf("worker%d: selecting", w.Id)
 
 			select {
 			case build := <-w.BuildRequest:
-				Logger.Printf("worker%d: got build request %s", w.Id, BuildRequestToString(*build))
+				log.Debugf("worker%d: got build request %s", w.Id, BuildRequestToString(*build))
 
 				w.RunGitClone(build)
 
@@ -125,40 +147,20 @@ func (w *Worker) Start() {
 					w.RunBerks(build)
 				}
 
-				w.RunPacker(build)
+				w.RunPackerBuild(build)
 
 			case <-w.Done:
-				Logger.Printf("worker%d: done", w.Id)
+				log.Debugf("worker%d: done", w.Id)
 				return
 			}
 		}
 	}()
 }
-func (w *Worker) Stop() {
 
+func (w *Worker) Stop() {
+	w.State = Stopping
 	go func() {
 		w.Done <- true
+		w.State = Stopped
 	}()
-}
-
-func StreamToLog(reader io.Reader) {
-	b := bufio.NewScanner(reader)
-	for b.Scan() {
-		Logger.Println(b.Text())
-	}
-
-	if err := b.Err(); err != nil {
-		Logger.Println("error reading:", err)
-	}
-}
-
-func StreamToString(reader io.Reader, s *string) {
-	b := bufio.NewScanner(reader)
-	for b.Scan() {
-		*s = *s + b.Text()
-	}
-
-	if err := b.Err(); err != nil {
-		*s = *s + fmt.Sprintf("%v", err)
-	}
 }

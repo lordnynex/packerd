@@ -2,6 +2,8 @@
 package packerd
 
 import (
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/tompscanlan/packerd/models"
 )
 
@@ -17,7 +19,7 @@ func StartDispatcher(count int) {
 	WorkerQueue = make(chan chan *models.Buildrequest, count)
 
 	for i := 1; i < count+1; i++ {
-		Logger.Printf("Starting worker%d", i)
+		log.Debugf("Dispatcher starting worker%d", i)
 		worker := NewWorker(i, WorkerQueue)
 		worker.Start()
 	}
@@ -26,11 +28,11 @@ func StartDispatcher(count int) {
 		for {
 			select {
 			case work := <-WorkQueue:
-				Logger.Println("Received build requeust", BuildRequestToString(*work))
+				log.Debugf("Received build requeust", BuildRequestToString(*work))
 				go func() {
 					worker := <-WorkerQueue
 
-					Logger.Println("Dispatching build request", BuildRequestToString(*work))
+					log.Debugln("Dispatching build request", BuildRequestToString(*work))
 					worker <- work
 
 				}()
