@@ -1,16 +1,16 @@
 {
   "variables": {
-    "version": "0.90",
+    "version": "{{env `version`}}",
     "http_proxy": "{{env `http_proxy`}}",
     "https_proxy": "{{env `https_proxy`}}",
     "ftp_proxy": "{{env `ftp_proxy`}}",
     "no_proxy": "{{env `no_proxy`}}",
     "org": "tompscanlan",
     "role": "packerd",
-    "docker_repo_username": "{{env `docker_repo_username`}}",
-    "docker_repo_password": "{{env `docker_repo_password`}}",
-    "docker_repo_server": "{{env `docker_repo_server`}}",
-    "docker_repo_email": "{{env `docker_repo_email`}}",
+    "docker_repo_username": null,
+    "docker_repo_password": null,
+    "docker_repo_server": null,
+    "docker_repo_email": null,
     "chef_log_level": "{{env `chef_log_level`}}"
   },
   "builders": [
@@ -63,8 +63,32 @@
       {
         "type": "docker-tag",
         "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
+        "tag": "{{user `version`}}",
+        "force": true
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_email": "{{user `docker_repo_email`}}",
+        "login_username": "{{user `docker_repo_username`}}",
+        "login_password": "{{user `docker_repo_password`}}",
+        "login_server": "{{user `docker_repo_server`}}"
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
         "tag": "latest",
         "force": true
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_email": "{{user `docker_repo_email`}}",
+        "login_username": "{{user `docker_repo_username`}}",
+        "login_password": "{{user `docker_repo_password`}}",
+        "login_server": "{{user `docker_repo_server`}}"
       }
     ]
   ]

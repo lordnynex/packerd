@@ -1,9 +1,16 @@
 package packerd
 
 import (
-	"log"
 	"os"
+
+	log "github.com/Sirupsen/logrus"
 )
 
-// global logger
-var Logger = log.New(os.Stderr, "debug: ", log.Ldate|log.Ltime|log.Lshortfile)
+func init() {
+	// global logger
+	//var Logger = log.New(os.Stderr, "debug: ", log.Ldate|log.Ltime|log.Lshortfile)
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stderr)
+	//log.SetLevel(log.WarnLevel)
+	log.SetLevel(log.InfoLevel)
+}
