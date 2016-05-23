@@ -22,6 +22,7 @@
     },
     "packages-cookbook": {
         "bash": "install",
+        "supervisor": "install",
         "sudo": "install",
         "wget": "install",
         "curl": "install",
@@ -39,6 +40,7 @@
     "recipe[apt]",
     "recipe[chef-dk]",
     "recipe[packer]",
+    "recipe[packerd]",
     "recipe[golang]",
     "recipe[golang::packages]",
     "recipe[docker_install]",

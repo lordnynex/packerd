@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+
+# trick to pull in functions and vars of the upstart script
+sed -i '/set -e/d' /etc/init.d/docker
+. /etc/init.d/docker status
+
+cgroupfs_mount
+
+touch "$DOCKER_LOGFILE"
+chgrp docker "$DOCKER_LOGFILE"
+
+ulimit -n 1048576
+if [ "$BASH" ]; then
+	ulimit -u 1048576
+else
+	ulimit -p 1048576
+fi
+

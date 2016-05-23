@@ -10,5 +10,6 @@ cookbook 'packer',             '~> 0.3.0'
 cookbook 'timezone_lwrp',      '~> 0.1.7'
 cookbook 'user',               '~> 0.4.2'
 
+cookbook 'packerd', path: 'provision/chef/cookbooks/packerd'
 cookbook 'chef_solo_proxy', git: 'https://github.com/tompscanlan/chef-solo-proxy.git'
 cookbook 'docker_install', git: 'https://github.com/tompscanlan/chef-docker-install.git'

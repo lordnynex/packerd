@@ -125,7 +125,7 @@ func configureAPI(api *operations.PackerdAPI) http.Handler {
 	})
 
 	api.ServerShutdown = func() {
-		bqerr := packerd.BuildQ.Store("serverdata.json")
+		bqerr := packerd.BuildQ.Store("/var/cache/packerd-data.json")
 		if bqerr != nil {
 			packerd.Logger.Printf("failed to store json: %s", *bqerr.Message)
 
