@@ -24,7 +24,13 @@
   "provisioners": [
     {
       "type": "shell",
-      "inline": ["apt-get update; apt-get install -y curl"]
+      "inline": ["apt-get update; apt-get install -y curl"],
+      "environment_vars": [
+        "http_proxy={{user `http_proxy`}}",
+        "https_proxy={{user `https_proxy`}}",
+        "ftp_proxy={{user `ftp_proxy`}}",
+        "no_proxy={{user `no_proxy`}}"
+      ]
     },
     {
       "type": "chef-solo",
@@ -55,7 +61,14 @@
 	"apt-get remove -y libpython3.4-minimal libpython3.4-stdlib chef libgl1-mesa-dri libllvm3.4 gcc-4.8 cpp-4.8 guile-2.0-libs",
 	"apt-get autoremove -y",
 	"dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n"
-	]
+	],
+      "environment_vars": [
+        "http_proxy={{user `http_proxy`}}",
+        "https_proxy={{user `https_proxy`}}",
+        "ftp_proxy={{user `ftp_proxy`}}",
+        "no_proxy={{user `no_proxy`}}"
+      ]
+
     }
   ],
   "post-processors": [
