@@ -1,0 +1,7 @@
+cookbook_path [{{.CookbookPaths}}]
+role_path "{{.RolesPath}}"
+data_bag_path   "{{.DataBagsPath}}"
+http_proxy "{{user `http_proxy`}}"
+https_proxy "{{user `https_proxy`}}"
+ftp_proxy "{{user `ftp_proxy`}}"
+no_proxy "{{user `no_proxy`}}"
