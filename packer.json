@@ -39,6 +39,7 @@
       ],
       "data_bags_path": "provision/chef/data_bags",
       "roles_path": "provision/chef/roles",
+	  "install_command": "https_proxy={{user `https_proxy`}} http_proxy={{user `http_proxy`}} curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo{{end}} bash"
       "json": {
         "http_proxy": "{{user `http_proxy`}}",
         "https_proxy": "{{user `https_proxy`}}",
