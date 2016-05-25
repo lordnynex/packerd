@@ -1,110 +1,121 @@
 {
-  "variables": {
-    "version": "{{env `version`}}",
-    "http_proxy": "{{env `http_proxy`}}",
-    "https_proxy": "{{env `https_proxy`}}",
-    "ftp_proxy": "{{env `ftp_proxy`}}",
-    "no_proxy": "{{env `no_proxy`}}",
-    "org": "tompscanlan",
-    "role": "packerd",
-    "docker_repo_username": null,
-    "docker_repo_password": null,
-    "docker_repo_server": null,
-    "docker_repo_email": null,
-    "chef_log_level": "{{env `chef_log_level`}}"
-  },
-  "builders": [
-    {
-      "name": "ubuntu-docker",
-      "type": "docker",
-      "image": "ubuntu:trusty",
-      "commit": true
-    }
-  ],
-  "provisioners": [
-    {
-      "type": "shell",
-      "inline": ["apt-get update; apt-get install -y curl"],
-      "environment_vars": [
-        "http_proxy={{user `http_proxy`}}",
-        "https_proxy={{user `https_proxy`}}",
-        "ftp_proxy={{user `ftp_proxy`}}",
-        "no_proxy={{user `no_proxy`}}"
-      ]
+    "variables": {
+        "version": "{{env `version`}}",
+        "http_proxy_schema": "{{env `http_proxy_schema`}}",
+        "http_proxy": "{{env `http_proxy`}}",
+        "http_proxy_user": "{{env `http_proxy_user`}}",
+        "http_proxy_pass": "{{env `http_proxy_pass`}}",
+        "https_proxy_schema": "{{env `https_proxy_schema`}}",
+        "https_proxy": "{{env `https_proxy`}}",
+        "https_proxy_user": "{{env `https_proxy_user`}}",
+        "https_proxy_pass": "{{env `https_proxy_pass`}}",
+        "ftp_proxy_schema": "{{env `ftp_proxy_schema`}}",
+        "ftp_proxy": "{{env `ftp_proxy`}}",
+        "ftp_proxy_user": "{{env `ftp_proxy_user`}}",
+        "ftp_proxy_pass": "{{env `ftp_proxy_pass`}}",
+        "no_proxy": "{{env `no_proxy`}}",
+        "org": "tompscanlan",
+        "role": "packerd",
+        "docker_repo_username": null,
+        "docker_repo_password": null,
+        "docker_repo_server": null,
+        "docker_repo_email": null,
+        "chef_log_level": "{{env `chef_log_level`}}"
     },
-    {
-      "type": "chef-solo",
-      "cookbook_paths": [
-        "provision/chef/vendor-cookbooks"
-      ],
-      "data_bags_path": "provision/chef/data_bags",
-      "roles_path": "provision/chef/roles",
-      "install_command": "export https_proxy={{user `https_proxy`}}; export http_proxy={{user `http_proxy`}};  curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo -E{{end}} bash",
-      "config_template": "chef.template",
-	  "json": {
-        "http_proxy": "{{user `http_proxy`}}",
-        "https_proxy": "{{user `https_proxy`}}",
-        "ftp_proxy": "{{user `ftp_proxy`}}",
-        "no_proxy": "{{user `no_proxy`}}"
-      },
-      "run_list": [
-        "role[{{user `role`}}]"
-      ]
-    },
-    {
-      "type": "shell",
-      "inline": [
-        "set -x",
-        ". /etc/profile.d/golang.sh",
-	"cd /opt/go/src/github.com/tompscanlan/packerd",
-	"go install ./cmd/packerd-server",
-	"openssl req -new -newkey rsa:4096 -days 365 -nodes -x509  -subj \"/C=US/ST=KY/L=Louisville/O=none/CN=none.com\" -keyout /etc/ssl/private/temp.key  -out /etc/ssl/private/temp.crt",
-	"rm -rf /var/chef/cache/*",
-	"apt-get remove -y libpython3.4-minimal libpython3.4-stdlib chef libgl1-mesa-dri libllvm3.4 gcc-4.8 cpp-4.8 guile-2.0-libs",
-	"apt-get autoremove -y",
-	"dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n"
-	],
-      "environment_vars": [
-        "http_proxy={{user `http_proxy`}}",
-        "https_proxy={{user `https_proxy`}}",
-        "ftp_proxy={{user `ftp_proxy`}}",
-        "no_proxy={{user `no_proxy`}}"
-      ]
-
-    }
-  ],
-  "post-processors": [
-    [
-      {
-        "type": "docker-tag",
-        "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
-        "tag": "{{user `version`}}",
-        "force": true
-      },
-      {
-        "type": "docker-push",
-        "login": true,
-        "login_email": "{{user `docker_repo_email`}}",
-        "login_username": "{{user `docker_repo_username`}}",
-        "login_password": "{{user `docker_repo_password`}}",
-        "login_server": "{{user `docker_repo_server`}}"
-      }
+    "builders": [
+        {
+            "name": "ubuntu-docker",
+            "type": "docker",
+            "image": "ubuntu:trusty",
+            "commit": true
+        }
     ],
-    [
-      {
-        "type": "docker-tag",
-        "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
-        "tag": "latest",
-        "force": true
-      },
-      {
-        "type": "docker-push",
-        "login": true,
-        "login_email": "{{user `docker_repo_email`}}",
-        "login_username": "{{user `docker_repo_username`}}",
-        "login_password": "{{user `docker_repo_password`}}",
-        "login_server": "{{user `docker_repo_server`}}"
-      }
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "apt-get update; apt-get install -y curl"
+            ],
+            "environment_vars": [
+                "http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}}",
+                "https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}",
+                "ftp_proxy={{user `ftp_proxy_schema`}}://{{user `ftp_proxy_user`}}:{{user `ftp_proxy_pass`}}@{{user `ftp_proxy`}}",
+                "no_proxy={{user `no_proxy`}}"
+            ]
+        },
+        {
+            "type": "chef-solo",
+            "cookbook_paths": [
+                "provision/chef/vendor-cookbooks"
+            ],
+            "data_bags_path": "provision/chef/data_bags",
+            "roles_path": "provision/chef/roles",
+            "install_command": "export https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}; export http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}};  curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo -E{{end}} bash",
+            "config_template": "chef.template",
+            "json": {
+                "http_proxy": "{{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}}",
+                "https_proxy": "{{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}",
+                "ftp_proxy": "{{user `ftp_proxy_schema`}}://{{user `ftp_proxy_user`}}:{{user `ftp_proxy_pass`}}@{{user `ftp_proxy`}}",
+                "no_proxy": "{{user `no_proxy`}}"
+            },
+            "run_list": [
+                "recipe[chef_solo_proxy]",
+                "role[{{user `role`}}]"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "set -x",
+                ". /etc/profile.d/golang.sh",
+                "cd /opt/go/src/github.com/tompscanlan/packerd",
+                "go install ./cmd/packerd-server",
+                "openssl req -new -newkey rsa:4096 -days 365 -nodes -x509  -subj \"/C=US/ST=KY/L=Louisville/O=none/CN=none.com\" -keyout /etc/ssl/private/temp.key  -out /etc/ssl/private/temp.crt",
+                "rm -rf /var/chef/cache/*",
+                "apt-get remove -y libpython3.4-minimal libpython3.4-stdlib chef libgl1-mesa-dri libllvm3.4 gcc-4.8 cpp-4.8 guile-2.0-libs",
+                "apt-get autoremove -y",
+                "dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n"
+            ],
+            "environment_vars": [
+                "http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}}",
+                "https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}",
+                "ftp_proxy={{user `ftp_proxy_schema`}}://{{user `ftp_proxy_user`}}:{{user `ftp_proxy_pass`}}@{{user `ftp_proxy`}}",
+                "no_proxy={{user `no_proxy`}}"
+            ]
+        }
+    ],
+    "post-processors": [
+        [
+            {
+                "type": "docker-tag",
+                "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
+                "tag": "{{user `version`}}",
+                "force": true
+            },
+            {
+                "type": "docker-push",
+                "login": true,
+                "login_email": "{{user `docker_repo_email`}}",
+                "login_username": "{{user `docker_repo_username`}}",
+                "login_password": "{{user `docker_repo_password`}}",
+                "login_server": "{{user `docker_repo_server`}}"
+            }
+        ],
+        [
+            {
+                "type": "docker-tag",
+                "repository": "{{user `org`}}/ubuntu-{{user `role`}}",
+                "tag": "latest",
+                "force": true
+            },
+            {
+                "type": "docker-push",
+                "login": true,
+                "login_email": "{{user `docker_repo_email`}}",
+                "login_username": "{{user `docker_repo_username`}}",
+                "login_password": "{{user `docker_repo_password`}}",
+                "login_server": "{{user `docker_repo_server`}}"
+            }
+        ]
     ]
-  ]
 }

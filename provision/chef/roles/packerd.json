@@ -38,8 +38,8 @@
   },
   "run_list": [
     "recipe[apt]",
-    "recipe[packages]",
     "recipe[chef-dk]",
+    "recipe[packages]",
     "recipe[packer]",
     "recipe[packerd]",
     "recipe[golang]",
