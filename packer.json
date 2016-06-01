@@ -85,7 +85,7 @@
         [
             {
                 "type": "docker-tag",
-                "repository": "{{user `org`}}/{{user `role`}}",
+                "repository": "{{user `docker_repo_server`}}/{{user `org`}}/{{user `role`}}",
                 "tag": "{{user `version`}}",
                 "force": true
             },
@@ -101,7 +101,7 @@
         [
             {
                 "type": "docker-tag",
-                "repository": "{{user `org`}}/{{user `role`}}",
+                "repository": "{{user `docker_repo_server`}}/{{user `org`}}/{{user `role`}}",
                 "tag": "latest",
                 "force": true
             },
