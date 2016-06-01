@@ -20,7 +20,7 @@
         "docker_repo_password": null,
         "docker_repo_server": null,
         "docker_repo_email": null,
-        "chef_log_level": "debug"
+        "chef_log_level": "info"
     },
     "builders": [
         {
