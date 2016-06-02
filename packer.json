@@ -37,7 +37,9 @@
               "apt-get update;",
               "apt-get install -y curl",
               "cd /tmp; curl -LOJ 'https://omnitruck.chef.io/stable/chefdk/download?p=ubuntu&m=x86_64&pv=14.04&v=latest'",
-              "dpkg -i chefdk*deb && rm chefdk*deb"
+              "dpkg -i chefdk*deb && rm chefdk*deb",
+			  "mkdir /root/.berkshelf/",
+			  "echo '{\"ssl\":{\"verify\": false }}' > ~/.berkshelf/config.json"
             ],
             "environment_vars": [
                 "http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}}",
