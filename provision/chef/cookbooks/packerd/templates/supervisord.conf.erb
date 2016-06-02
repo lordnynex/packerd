@@ -9,7 +9,7 @@ stderr_logfile=/dev/stderr
 stderr_logfile_maxbytes=0
 
 [program:packerd]
-command=/opt/go/bin/packerd-server --tls-certificate /etc/ssl/private/temp.crt --tls-key /etc/ssl/private/temp.key --port 64154 --tls-port 64155 --host 172.17.0.2
+command=/bin/bash -c "/opt/go/bin/packerd-server --tls-certificate /etc/ssl/private/temp.crt --tls-key /etc/ssl/private/temp.key --port 64154 --tls-port 64155 --host `/sbin/ifconfig eth0 | grep inet\ addr | awk -F: '{print $2}' | awk '{print $1}'`"
 stdout_logfile=/dev/stdout
 stdout_logfile_maxbytes=0
 stderr_logfile=/dev/stderr
