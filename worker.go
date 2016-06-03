@@ -73,7 +73,7 @@ func (w *Worker) RunPacker(args []string, br *models.Buildrequest) error {
 
 	err := w.RunCmd("packer", args, br.Localpath, &br.Status, &br.Buildlog)
 
-	return errgo
+	return err
 }
 
 func (w *Worker) RunBerks(br *models.Buildrequest) error {
