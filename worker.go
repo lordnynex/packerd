@@ -51,7 +51,8 @@ func (w *Worker) RunPackerValidate(br *models.Buildrequest) error {
 }
 
 func (w *Worker) RunPackerBuild(br *models.Buildrequest) error {
-	args := []string{"build", "-machine-readable"}
+	// args := []string{"build", "-machine-readable"}
+	args := []string{"build"}
 	err := w.RunPacker(args, br)
 	return err
 }
@@ -72,7 +73,7 @@ func (w *Worker) RunPacker(args []string, br *models.Buildrequest) error {
 
 	err := w.RunCmd("packer", args, br.Localpath, &br.Status, &br.Buildlog)
 
-	return err
+	return errgo
 }
 
 func (w *Worker) RunBerks(br *models.Buildrequest) error {
@@ -84,7 +85,7 @@ func (w *Worker) RunBerks(br *models.Buildrequest) error {
 
 func (w *Worker) RunCmd(command string, args []string, dir string, status *string, fulllog *string) error {
 
-	log.Debugf("running command [%s %v]", command, args)
+	log.Infof("running command [%s %v]", command, args)
 	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
 	//cmd.Env = []string{"PACKER_LOG=1"}
