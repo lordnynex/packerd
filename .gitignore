@@ -28,3 +28,6 @@ temp.crt
 temp.key
 serverdata.json
 Berksfile.lock
+berks-cookbooks
+provision/chef/vendor-cookbooks/
+.kitchen/

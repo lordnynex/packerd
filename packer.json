@@ -71,7 +71,7 @@
                 "go install ./cmd/packerd-server",
                 "openssl req -new -newkey rsa:4096 -days 365 -nodes -x509  -subj \"/C=US/ST=KY/L=Louisville/O=none/CN=none.com\" -keyout /etc/ssl/private/temp.key  -out /etc/ssl/private/temp.crt",
                 "rm -rf /var/chef/cache/*",
-                "apt-get remove -y libpython3.4-minimal libpython3.4-stdlib chef libgl1-mesa-dri libllvm3.4 gcc-4.8 cpp-4.8 guile-2.0-libs",
+                "apt-get remove -y libpython3.4-minimal libpython3.4-stdlib libgl1-mesa-dri libllvm3.4 gcc-4.8 cpp-4.8 guile-2.0-libs",
                 "apt-get autoremove -y",
                 "dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n"
             ],
