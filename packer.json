@@ -34,8 +34,7 @@
         {
             "type": "chef-solo",
             "cookbook_paths": [
-                "berks-cookbooks",
-                "provision/chef/vendor-cookbooks"
+                "berks-cookbooks"
             ],
             "execute_command": "{{if .Sudo}}sudo {{end}}chef-solo --no-color -l {{user `chef_log_level`}} -c {{.ConfigPath}} -j {{.JsonPath}}",
             "data_bags_path": "provision/chef/data_bags",
