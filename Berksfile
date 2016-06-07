@@ -3,7 +3,6 @@ source 'https://supermarket.chef.io'
 
 cookbook 'apt',                '~> 2.9.2'
 cookbook 'docker',             '~> 2.7.1'
-cookbook 'gem_installer',      '~> 0.1.2'
 cookbook 'golang',             '~> 1.7.0'
 cookbook 'packages',           '~> 1.0.0'
 cookbook 'packer',             '~> 0.3.0'

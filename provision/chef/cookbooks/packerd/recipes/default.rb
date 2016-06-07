@@ -1,5 +1,6 @@
 deb = '/tmp/chefdk.deb'
 
+
 remote_file deb do
   source 'https://omnitruck.chef.io/stable/chefdk/download?p=ubuntu&m=x86_64&pv=14.04&v=latest'
 end
@@ -24,6 +25,11 @@ file "/root/.berkshelf/config.json" do
   mode '0755'
   content '{"ssl": { "verify": false }}'
   action :create
+end
+
+execute '/opt/chefdk/embedded/bin/gem install kitchen-docker' do
+  only_if do ! Dir.glob('/root/.chefdk/gem/ruby/2.1.0/gems/kitchen-docker*').empty? end
+  action :run
 end
 
 directory '/etc/supervisor' do

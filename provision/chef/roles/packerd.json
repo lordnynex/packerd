@@ -20,11 +20,6 @@
         "github.com/tompscanlan/packerd"
       ]
     },
-    "gem_installer": {
-        "gems": {
-          "kitchen-docker": nil
-	}
-    },
     "packages-cookbook": {
         "bash": "install",
         "supervisor": "install",

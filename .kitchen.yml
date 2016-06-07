@@ -11,8 +11,8 @@ provisioner:
     - provision/chef/vendor-cookbooks
   # you can set these to a valid proxy if
   # running tests behind a proxy
-  # http_proxy: http://192.168.0.3:3128
-  # https_proxy: http://192.168.0.3:3128
+  http_proxy: http://kbs316:Chapstacio7@proxy.kdc.capitalone.com:8099
+  https_proxy: http://kbs316:Chapstacio7@proxy.kdc.capitalone.com:8099
 
 
 platforms:
@@ -20,6 +20,8 @@ platforms:
     driver_config:
       privileged: true
       image: ubuntu:trusty
+      http_proxy: http://kbs316:Chapstacio7@proxy.kdc.capitalone.com:8099
+      https_proxy: http://kbs316:Chapstacio7@proxy.kdc.capitalone.com:8099
   - name: built
     driver_config:
       privileged: true
