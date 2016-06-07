@@ -32,31 +32,14 @@
     ],
     "provisioners": [
         {
-            "type": "shell",
-            "inline": [
-              "apt-get update;",
-              "apt-get install -y curl",
-              "cd /tmp; curl -LOJ 'https://omnitruck.chef.io/stable/chefdk/download?p=ubuntu&m=x86_64&pv=14.04&v=latest'",
-              "dpkg -i chefdk*deb && rm chefdk*deb",
-			  "mkdir /root/.berkshelf/",
-			  "echo '{\"ssl\":{\"verify\": false }}' > ~/.berkshelf/config.json"
-            ],
-            "environment_vars": [
-                "http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}}",
-                "https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}",
-                "ftp_proxy={{user `ftp_proxy_schema`}}://{{user `ftp_proxy_user`}}:{{user `ftp_proxy_pass`}}@{{user `ftp_proxy`}}",
-                "no_proxy={{user `no_proxy`}}"
-            ]
-        },
-        {
             "type": "chef-solo",
             "cookbook_paths": [
-                "provision/chef/vendor-cookbooks"
+                "berks-cookbooks"
             ],
             "execute_command": "{{if .Sudo}}sudo {{end}}chef-solo --no-color -l {{user `chef_log_level`}} -c {{.ConfigPath}} -j {{.JsonPath}}",
             "data_bags_path": "provision/chef/data_bags",
             "roles_path": "provision/chef/roles",
-            "install_command": "export https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}; export http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}};  curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo -E{{end}} bash",
+            "install_command": "export https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}; export http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}};  apt-get update; apt-get install -y curl; curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo -E{{end}} bash",
             "config_template": "chef.template",
             "run_list": [
                 "role[{{user `role`}}]"
