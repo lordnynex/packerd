@@ -18,12 +18,13 @@ platforms:
   - name: built
     driver_config:
       privileged: true
-      image: dockyard.cloud.capitalone.com/tompscanlan/packerd
+      image: dockyardaws.cloud.capitalone.com/tompscanlan/packerd
       platform: ubuntu
 
 
 suites:
   - name: packerd
+    driver_config:
+      dockerfile: kitchen-dockerfile
     run_list:
       - role[packerd]
-
