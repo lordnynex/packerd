@@ -31,3 +31,4 @@ Berksfile.lock
 berks-cookbooks
 provision/chef/vendor-cookbooks/
 .kitchen/
+kitchen-dockerfile
