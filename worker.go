@@ -77,7 +77,7 @@ func (w *Worker) RunPacker(args []string, br *models.Buildrequest) error {
 }
 
 func (w *Worker) RunBerks(br *models.Buildrequest) error {
-	args := []string{"vendor", "provision/chef/vendor-cookbooks"}
+	args := []string{"vendor"}
 	err := w.RunCmd("berks", args, br.Localpath, &br.Status, &br.Buildlog)
 
 	return err

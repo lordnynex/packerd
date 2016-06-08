@@ -7,12 +7,7 @@ provisioner:
   roles_path: provision/chef/roles
   data_bags_path:  provision/chef/data_bags
   cookbook_path:
-    - provision/chef/cookbooks
-    - provision/chef/vendor-cookbooks
-  # you can set these to a valid proxy if
-  # running tests behind a proxy
-  http_proxy: http://kbs316:Chapstacio7@proxy.kdc.capitalone.com:8099
-  https_proxy: http://kbs316:Chapstacio7@proxy.kdc.capitalone.com:8099
+    - berks-cookbooks
 
 
 platforms:
@@ -20,12 +15,10 @@ platforms:
     driver_config:
       privileged: true
       image: ubuntu:trusty
-      http_proxy: http://kbs316:Chapstacio7@proxy.kdc.capitalone.com:8099
-      https_proxy: http://kbs316:Chapstacio7@proxy.kdc.capitalone.com:8099
   - name: built
     driver_config:
       privileged: true
-      image: tompscanlan/ubuntu-packerd
+      image: dockyard.cloud.capitalone.com/tompscanlan/packerd
       platform: ubuntu
 
 
