@@ -15,6 +15,8 @@ platforms:
     driver_config:
       privileged: true
       image: ubuntu:trusty
+    run_list:
+      - role[packerd]
   - name: built
     driver_config:
       privileged: true
@@ -26,5 +28,3 @@ suites:
   - name: packerd
     driver_config:
       dockerfile: kitchen-dockerfile
-    run_list:
-      - role[packerd]
