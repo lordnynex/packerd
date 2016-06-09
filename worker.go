@@ -38,6 +38,12 @@ func NewWorker(id int, workerqueue chan chan *models.Buildrequest) *Worker {
 	return worker
 }
 
+func (w *Worker) RunGitCheckout(br *models.Buildrequest) error {
+	args := []string{"clone", br.Branch}
+	err := w.RunCmd("git", args, br.Localpath, &br.Status, &br.Buildlog)
+	return err
+}
+
 func (w *Worker) RunGitClone(br *models.Buildrequest) error {
 	args := []string{"clone", *br.Giturl, br.Localpath}
 	err := w.RunCmd("git", args, br.Localpath, &br.Status, &br.Buildlog)
@@ -56,6 +62,7 @@ func (w *Worker) RunPackerBuild(br *models.Buildrequest) error {
 	err := w.RunPacker(args, br)
 	return err
 }
+
 func (w *Worker) RunPacker(args []string, br *models.Buildrequest) error {
 	if br.Buildonly != "" {
 		args = append(args, fmt.Sprintf("-only=%s", br.Buildonly))
@@ -143,6 +150,9 @@ func (w *Worker) Start() {
 				log.Debugf("worker%d: got build request %s", w.Id, BuildRequestToString(*build))
 
 				w.RunGitClone(build)
+				if build.Branch != "" {
+					w.RunGitCheckout(build)
+				}
 
 				if _, err := os.Stat(filepath.Join(build.Localpath, "Berksfile")); err == nil {
 					w.RunBerks(build)
