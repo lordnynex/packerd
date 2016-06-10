@@ -17,7 +17,7 @@
         "github.com/naoina/denco",
         "github.com/jessevdk/go-flags",
         "github.com/tylerb/graceful",
-        "github.com/tompscanlan/packerd"
+		"github.kdc.capitalone.com/kbs316/packerd"
       ]
     },
     "packages-cookbook": {
