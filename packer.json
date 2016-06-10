@@ -36,7 +36,7 @@
             "cookbook_paths": [
                 "berks-cookbooks"
             ],
-            "execute_command": "{{if .Sudo}}sudo {{end}}chef-solo --no-color -l {{user `chef_log_level`}} -c {{.ConfigPath}} -j {{.JsonPath}}",
+            "execute_command": "{{if .Sudo}}sudo {{end}}/opt/chef/bin/chef-solo --no-color -l {{user `chef_log_level`}} -c {{.ConfigPath}} -j {{.JsonPath}}",
             "data_bags_path": "provision/chef/data_bags",
             "roles_path": "provision/chef/roles",
             "install_command": "export https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}; export http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}};  apt-get update; apt-get install -y curl; curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo -E{{end}} bash",
