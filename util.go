@@ -10,7 +10,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/tompscanlan/packerd/models"
+	"github.kdc.capitalone.com/kbs316/packerd/models"
 )
 
 func BuildRequestToString(br models.Buildrequest) string {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/tompscanlan/packerd/models"
+	"github.kdc.capitalone.com/kbs316/packerd/models"
 )
 
 /*GetQueueTestLogByIDOK returns the test kitchen run log

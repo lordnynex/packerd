@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/tompscanlan/packerd/models"
+	"github.kdc.capitalone.com/kbs316/packerd/models"
 )
 
 /*GetPackerLogByIDOK returns a packer build log

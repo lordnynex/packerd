@@ -8,7 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	uuid "github.com/satori/go.uuid"
-	"github.com/tompscanlan/packerd/models"
+	"github.kdc.capitalone.com/kbs316/packerd/models"
 )
 
 type BuildQueue map[string]*models.Buildrequest

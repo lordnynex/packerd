@@ -12,12 +12,12 @@ import (
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
 
-	"github.com/tompscanlan/packerd"
-	"github.com/tompscanlan/packerd/models"
+	"github.kdc.capitalone.com/kbs316/packerd"
+	"github.kdc.capitalone.com/kbs316/packerd/models"
 
-	"github.com/tompscanlan/packerd/restapi/operations"
-	"github.com/tompscanlan/packerd/restapi/operations/command"
-	"github.com/tompscanlan/packerd/restapi/operations/informational"
+	"github.kdc.capitalone.com/kbs316/packerd/restapi/operations"
+	"github.kdc.capitalone.com/kbs316/packerd/restapi/operations/command"
+	"github.kdc.capitalone.com/kbs316/packerd/restapi/operations/informational"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
