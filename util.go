@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"runtime"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -38,9 +40,14 @@ func StreamToLog(reader io.Reader) {
 }
 
 func StreamToString(reader io.Reader, s *string) {
+	var mutex = &sync.Mutex{}
+
 	b := bufio.NewScanner(reader)
 	for b.Scan() {
+		mutex.Lock()
 		*s = *s + b.Text()
+		mutex.Unlock()
+		runtime.Gosched()
 	}
 
 	if err := b.Err(); err != nil {
