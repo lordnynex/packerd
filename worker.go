@@ -39,7 +39,7 @@ func NewWorker(id int, workerqueue chan chan *models.Buildrequest) *Worker {
 }
 
 func (w *Worker) RunGitCheckout(br *models.Buildrequest) error {
-	args := []string{"clone", br.Branch}
+	args := []string{"checkout", br.Branch}
 	err := w.RunCmd("git", args, br.Localpath, &br.Status, &br.Buildlog)
 	return err
 }
