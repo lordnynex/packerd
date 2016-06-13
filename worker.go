@@ -38,10 +38,42 @@ func NewWorker(id int, workerqueue chan chan *models.Buildrequest) *Worker {
 	return worker
 }
 
+func (w *Worker) RunKitchenTest(br *models.Buildrequest) error {
+	gem := "/opt/chefdk/embedded/bin/gem"
+	if _, err := os.Stat(gem); err == nil {
+		args := []string{"install", "kitchen-docker"}
+		err := w.RunCmd(gem, args, br.Localpath, &br.Status, &br.Buildlog)
+		if err != nil {
+			return err
+		}
+	}
+
+	if _, err := os.Stat(filepath.Join(br.Localpath, "gen-kitchen-dockerfile.sh")); err == nil {
+		args := []string{"gen-kitchen-dockerfile.sh"}
+		err := w.RunCmd("bash", args, br.Localpath, &br.Status, &br.Buildlog)
+		if err != nil {
+			return err
+		}
+	}
+	if _, err := os.Stat(filepath.Join(br.Localpath, ".kitchen.yml")); err == nil {
+
+		args := []string{"test"}
+		err := w.RunCmd("kitchen", args, br.Localpath, &br.Status, &br.Buildlog)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (w *Worker) RunGitCheckout(br *models.Buildrequest) error {
-	args := []string{"checkout", br.Branch}
-	err := w.RunCmd("git", args, br.Localpath, &br.Status, &br.Buildlog)
-	return err
+	if br.Branch != "" {
+		args := []string{"checkout", br.Branch}
+		err := w.RunCmd("git", args, br.Localpath, &br.Status, &br.Buildlog)
+		return err
+	}
+	return nil
 }
 
 func (w *Worker) RunGitClone(br *models.Buildrequest) error {
@@ -84,10 +116,12 @@ func (w *Worker) RunPacker(args []string, br *models.Buildrequest) error {
 }
 
 func (w *Worker) RunBerks(br *models.Buildrequest) error {
-	args := []string{"vendor"}
-	err := w.RunCmd("berks", args, br.Localpath, &br.Status, &br.Buildlog)
-
-	return err
+	if _, err := os.Stat(filepath.Join(br.Localpath, "Berksfile")); err == nil {
+		args := []string{"vendor"}
+		err := w.RunCmd("berks", args, br.Localpath, &br.Status, &br.Buildlog)
+		return err
+	}
+	return nil
 }
 
 func (w *Worker) RunCmd(command string, args []string, dir string, status *string, fulllog *string) error {
@@ -149,16 +183,26 @@ func (w *Worker) Start() {
 			case build := <-w.BuildRequest:
 				log.Debugf("worker%d: got build request %s", w.Id, BuildRequestToString(*build))
 
-				w.RunGitClone(build)
-				if build.Branch != "" {
-					w.RunGitCheckout(build)
+				if err := w.RunGitClone(build); err != nil {
+					log.Error(err.Error())
+					return
 				}
-
-				if _, err := os.Stat(filepath.Join(build.Localpath, "Berksfile")); err == nil {
-					w.RunBerks(build)
+				if err := w.RunGitCheckout(build); err != nil {
+					log.Error(err.Error())
+					return
 				}
-
-				w.RunPackerBuild(build)
+				if err := w.RunBerks(build); err != nil {
+					log.Error(err.Error())
+					return
+				}
+				if err := w.RunPackerBuild(build); err != nil {
+					log.Error(err.Error())
+					return
+				}
+				if err := w.RunKitchenTest(build); err != nil {
+					log.Error(err.Error())
+					return
+				}
 
 			case <-w.Done:
 				log.Debugf("worker%d: done", w.Id)

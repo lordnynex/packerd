@@ -11,12 +11,6 @@ provisioner:
 
 
 platforms:
-  - name: ubuntu
-    driver_config:
-      privileged: true
-      image: ubuntu:trusty
-    run_list:
-      - role[packerd]
   - name: built
     driver_config:
       privileged: true
