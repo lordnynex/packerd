@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.kdc.capitalone.com/kbs316/packerd/models"
+	"github.com/tompscanlan/packerd/models"
 )
 
 func TestWorker(t *testing.T) {

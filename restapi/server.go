@@ -12,7 +12,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	graceful "github.com/tylerb/graceful"
 
-	"github.kdc.capitalone.com/kbs316/packerd/restapi/operations"
+	"github.com/tompscanlan/packerd/restapi/operations"
 )
 
 //go:generate swagger generate server -t ../.. -A Packerd -f ./swagger.yml

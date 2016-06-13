@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.kdc.capitalone.com/kbs316/packerd/models"
+	"github.com/tompscanlan/packerd/models"
 )
 
 func TestNewBuildQueue(t *testing.T) {
@@ -41,7 +41,7 @@ func TestNewBuildQueue(t *testing.T) {
 func TestNewLookupBuildQueue(t *testing.T) {
 
 	status := "New Test"
-	giturl := "http://github.kdc.capitalone.com/kbs316/packerd"
+	giturl := "http://github.com/tompscanlan/packerd"
 	badId := "asd123"
 	nonExistId := "b7aa6044-bbde-415c-89e2-7833d4e544dc"
 

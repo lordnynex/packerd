@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.kdc.capitalone.com/kbs316/packerd/models"
+	"github.com/tompscanlan/packerd/models"
 )
 
 /*GetQueueOK list of links to the all queued builds

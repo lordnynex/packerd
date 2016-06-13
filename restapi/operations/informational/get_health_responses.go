@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.kdc.capitalone.com/kbs316/packerd/models"
+	"github.com/tompscanlan/packerd/models"
 )
 
 /*GetHealthOK health of the service

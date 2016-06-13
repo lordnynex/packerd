@@ -3,7 +3,7 @@ package packerd
 import (
 	"testing"
 
-	"github.kdc.capitalone.com/kbs316/packerd/models"
+	"github.com/tompscanlan/packerd/models"
 )
 
 func strPtr(s string) *string { return &s }

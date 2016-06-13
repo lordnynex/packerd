@@ -15,8 +15,8 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.kdc.capitalone.com/kbs316/packerd/restapi/operations/command"
-	"github.kdc.capitalone.com/kbs316/packerd/restapi/operations/informational"
+	"github.com/tompscanlan/packerd/restapi/operations/command"
+	"github.com/tompscanlan/packerd/restapi/operations/informational"
 )
 
 // NewPackerdAPI creates a new Packerd instance
