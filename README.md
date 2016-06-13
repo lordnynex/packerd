@@ -25,3 +25,6 @@ Passing a reference to this repository (and a bit more) to our bakery REST endpo
 * if there is a kitchen test, those will be run
 * calls may be made to a different endpoint for checking the status of the build
 
+This repository implements the above pipeline, and once this service is boot strapped, it can, and does, build itself.
+
+
