@@ -21,10 +21,6 @@ type Buildrequest struct {
 	 */
 	Branch string `json:"branch,omitempty"`
 
-	/* build log file
-	 */
-	Buildlog string `json:"buildlog,omitempty"`
-
 	/* only build the given builds by name, comma seperated
 	 */
 	Buildonly string `json:"buildonly,omitempty"`
@@ -32,14 +28,6 @@ type Buildrequest struct {
 	/* buildvars
 	 */
 	Buildvars Variables `json:"buildvars,omitempty"`
-
-	/* git commit to checkout
-	 */
-	Commit string `json:"commit,omitempty"`
-
-	/* estimated seconds from now that the build will be completed.  Used to direct when you should check back
-	 */
-	Eta int32 `json:"eta,omitempty"`
 
 	/* url to the git repo containing a packer config
 
@@ -51,25 +39,21 @@ type Buildrequest struct {
 	 */
 	ID string `json:"id,omitempty"`
 
-	/* links to artifacts
-	 */
-	Images []*Link `json:"images,omitempty"`
-
 	/* not settable
 	 */
 	Localpath string `json:"localpath,omitempty"`
 
-	/* status of the build
+	/* links to build responses
 	 */
-	Status string `json:"status,omitempty"`
+	Responselinks []*Link `json:"responselinks,omitempty"`
+
+	/* list of response ids generated for this build, a build that is retried may have more than one response
+	 */
+	Responses []string `json:"responses,omitempty"`
 
 	/* path within the giturl repo to the packer config.  defaults to /packer.json
 	 */
 	Templatepath string `json:"templatepath,omitempty"`
-
-	/* build log file
-	 */
-	Testlog string `json:"testlog,omitempty"`
 }
 
 // Validate validates this buildrequest
@@ -81,7 +65,12 @@ func (m *Buildrequest) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateImages(formats); err != nil {
+	if err := m.validateResponselinks(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateResponses(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -101,9 +90,33 @@ func (m *Buildrequest) validateGiturl(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Buildrequest) validateImages(formats strfmt.Registry) error {
+func (m *Buildrequest) validateResponselinks(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.Images) { // not required
+	if swag.IsZero(m.Responselinks) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Responselinks); i++ {
+
+		if swag.IsZero(m.Responselinks[i]) { // not required
+			continue
+		}
+
+		if m.Responselinks[i] != nil {
+
+			if err := m.Responselinks[i].Validate(formats); err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Buildrequest) validateResponses(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Responses) { // not required
 		return nil
 	}
 

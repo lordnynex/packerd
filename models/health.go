@@ -7,6 +7,7 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/validate"
 )
 
 /*Health health
@@ -15,17 +16,57 @@ swagger:model health
 */
 type Health struct {
 
-	/* status
+	/* diskpercentfull
+
+	Required: true
+	*/
+	Diskpercentfull *int64 `json:"diskpercentfull"`
+
+	/* goroutines
 	 */
-	Status string `json:"status,omitempty"`
+	Goroutines uint64 `json:"goroutines,omitempty"`
+
+	/* status
+
+	Required: true
+	*/
+	Status *string `json:"status"`
 }
 
 // Validate validates this health
 func (m *Health) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateDiskpercentfull(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateStatus(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Health) validateDiskpercentfull(formats strfmt.Registry) error {
+
+	if err := validate.Required("diskpercentfull", "body", m.Diskpercentfull); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Health) validateStatus(formats strfmt.Registry) error {
+
+	if err := validate.Required("status", "body", m.Status); err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -13,18 +13,18 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 )
 
-// NewGetQueueByIDParams creates a new GetQueueByIDParams object
+// NewGetBuildListByIDParams creates a new GetBuildListByIDParams object
 // with the default values initialized.
-func NewGetQueueByIDParams() GetQueueByIDParams {
+func NewGetBuildListByIDParams() GetBuildListByIDParams {
 	var ()
-	return GetQueueByIDParams{}
+	return GetBuildListByIDParams{}
 }
 
-// GetQueueByIDParams contains all the bound params for the get queue by Id operation
+// GetBuildListByIDParams contains all the bound params for the get build list by Id operation
 // typically these are obtained from a http.Request
 //
-// swagger:parameters getQueueById
-type GetQueueByIDParams struct {
+// swagger:parameters getBuildListById
+type GetBuildListByIDParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request
@@ -40,7 +40,7 @@ type GetQueueByIDParams struct {
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
 // for simple values it will use straight method calls
-func (o *GetQueueByIDParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
+func (o *GetBuildListByIDParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
 	var res []error
 	o.HTTPRequest = r
 
@@ -55,7 +55,7 @@ func (o *GetQueueByIDParams) BindRequest(r *http.Request, route *middleware.Matc
 	return nil
 }
 
-func (o *GetQueueByIDParams) bindID(rawData []string, hasKey bool, formats strfmt.Registry) error {
+func (o *GetBuildListByIDParams) bindID(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	var raw string
 	if len(rawData) > 0 {
 		raw = rawData[len(rawData)-1]
@@ -70,7 +70,7 @@ func (o *GetQueueByIDParams) bindID(rawData []string, hasKey bool, formats strfm
 	return nil
 }
 
-func (o *GetQueueByIDParams) validateID(formats strfmt.Registry) error {
+func (o *GetBuildListByIDParams) validateID(formats strfmt.Registry) error {
 
 	if err := validate.MinLength("id", "path", string(o.ID), 36); err != nil {
 		return err

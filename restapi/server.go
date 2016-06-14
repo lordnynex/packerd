@@ -55,6 +55,15 @@ type Server struct {
 	hasListeners bool
 }
 
+// Logf logs message either via defined user logger or via system one if no user logger is defined.
+func (s *Server) Logf(f string, args ...interface{}) {
+	if s.api != nil && s.api.Logger != nil {
+		s.api.Logger(f, args...)
+	} else {
+		log.Printf(f, args...)
+	}
+}
+
 // SetAPI configures the server with the specified API. Needs to be called before Serve
 func (s *Server) SetAPI(api *operations.PackerdAPI) {
 	if api == nil {
@@ -64,6 +73,7 @@ func (s *Server) SetAPI(api *operations.PackerdAPI) {
 	}
 
 	s.api = api
+	s.api.Logger = log.Printf
 	s.handler = configureAPI(api)
 }
 
@@ -78,7 +88,7 @@ func (s *Server) Serve() (err error) {
 	httpServer := &graceful.Server{Server: new(http.Server)}
 	httpServer.Handler = s.handler
 
-	fmt.Printf("serving packerd at http://%s\n", s.httpServerL.Addr())
+	s.Logf("Serving packerd at http://%s", s.httpServerL.Addr())
 	go func(l net.Listener) {
 		if err := httpServer.Serve(tcpKeepAliveListener{l.(*net.TCPListener)}); err != nil {
 			log.Fatalln(err)
@@ -99,8 +109,8 @@ func (s *Server) Serve() (err error) {
 	if err != nil {
 		return err
 	}
+	s.Logf("Serving packerd at https://%s", s.httpsServerL.Addr())
 
-	fmt.Printf("serving packerd at https://%s\n", s.httpsServerL.Addr())
 	wrapped := tls.NewListener(tcpKeepAliveListener{s.httpsServerL.(*net.TCPListener)}, httpsServer.TLSConfig)
 	if err := httpsServer.Serve(wrapped); err != nil {
 		return err

@@ -14,7 +14,7 @@ platforms:
   - name: built
     driver_config:
       privileged: true
-      image: dockyardaws.cloud.capitalone.com/tompscanlan/packerd
+      image: tompscanlan/packerd
       platform: ubuntu
 
 

@@ -11,16 +11,20 @@ import (
 	"github.com/tompscanlan/packerd/models"
 )
 
-type BuildQueue map[string]*models.Buildrequest
+// BuildMap provides mapping from uuid to a specific build request
+type BuildMap map[string]*models.Buildrequest
 
-var BuildQ = NewBuildQueue()
+//Builds is the global list of all known builds
+var Builds = NewBuildMap()
 
-func NewBuildQueue() BuildQueue {
-	bq := make(BuildQueue)
+// NewBuildMap creates a new build map
+func NewBuildMap() BuildMap {
+	bq := make(BuildMap)
 	return bq
 }
 
-func (bq *BuildQueue) LookUp(id string) (*models.Buildrequest, *models.Error) {
+// LookUp looks up a build when given a uuid as a string
+func (bq *BuildMap) LookUp(id string) (*models.Buildrequest, *models.Error) {
 
 	uuid, err := uuid.FromString(id)
 	if err != nil {
@@ -36,9 +40,11 @@ func (bq *BuildQueue) LookUp(id string) (*models.Buildrequest, *models.Error) {
 	return request, nil
 }
 
-func (bq *BuildQueue) Add(br *models.Buildrequest) (string, *models.Error) {
+// Add a new build request to the map
+func (bq *BuildMap) Add(br *models.Buildrequest) (string, *models.Error) {
 	var id = uuid.NewV4()
 
+	// if lookup of random new uuid succeeds, we're adding a duplicate
 	_, ok := (*bq)[id.String()]
 	if ok {
 		msg := "duplicate add for uuid: " + id.String()
@@ -48,12 +54,15 @@ func (bq *BuildQueue) Add(br *models.Buildrequest) (string, *models.Error) {
 	br.ID = id.String()
 	(*bq)[id.String()] = br
 
-	log.Debugf("for id: %q, Adding id: %q, %v", id, br.ID, *br)
+	log.WithFields(log.Fields{
+		"function": "BuildMap.Add",
+	}).Debugf("Adding: %v", br)
 
 	return id.String(), nil
 }
 
-func (bq *BuildQueue) Delete(id string) *models.Error {
+// Delete a build
+func (bq *BuildMap) Delete(id string) *models.Error {
 
 	uuid, err := uuid.FromString(id)
 	if err != nil {
@@ -66,7 +75,8 @@ func (bq *BuildQueue) Delete(id string) *models.Error {
 	return nil
 }
 
-func (bq *BuildQueue) Store(filename string) *models.Error {
+// Store all the builds as JSON in a file
+func (bq *BuildMap) Store(filename string) *models.Error {
 	b, err := json.Marshal(bq)
 	if err != nil {
 		//panic(err)
@@ -84,7 +94,8 @@ func (bq *BuildQueue) Store(filename string) *models.Error {
 	return nil
 }
 
-func (bq *BuildQueue) Load(filename string) *models.Error {
+// Load builds from a JSON file
+func (bq *BuildMap) Load(filename string) *models.Error {
 	blob, err := ioutil.ReadFile(filename)
 	if err != nil {
 		//panic(err)

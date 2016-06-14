@@ -9,7 +9,7 @@ import (
 
 func TestWorker(t *testing.T) {
 	wq := make(chan chan *models.Buildrequest, 1)
-	w := NewWorker(1, wq)
+	w := NewCommandWorker(1, wq)
 
 	w.Start()
 	if w.State != Started {
@@ -25,47 +25,52 @@ func TestWorker(t *testing.T) {
 
 func TestTrue(t *testing.T) {
 
-	var dir, status, log string
+	var dir string
+	bstage := new(models.Buildstage)
+
 	wq := make(chan chan *models.Buildrequest, 1)
-	w := NewWorker(1, wq)
+	w := NewCommandWorker(1, wq)
 
 	var args []string
-	err := w.RunCmd("true", args, dir, &status, &log)
+	err := RunCmd("true", args, dir, bstage)
 
 	if err != nil {
 		t.Errorf("worker run failed: %v", err)
 	}
 
-	if strings.Contains(status, "Failed") {
+	if strings.Contains(bstage.Status, "Failed") {
 		t.Errorf("worker run failed %d", w.State)
 	}
 }
 
 func TestArgs(t *testing.T) {
 
-	var dir, status, log string
+	var dir string
+	bstage := new(models.Buildstage)
+
 	wq := make(chan chan *models.Buildrequest, 1)
-	w := NewWorker(1, wq)
+	w := NewCommandWorker(1, wq)
 
 	args := []string{"a", "b", "-var", "\"asd=foo\""}
-	err := w.RunCmd("echo", args, dir, &status, &log)
+	err := RunCmd("echo", args, dir, bstage)
 
 	if err != nil {
 		t.Errorf("worker run failed: %v", err)
 	}
 
-	if strings.Contains(status, "Failed") {
+	if strings.Contains(bstage.Status, "Failed") {
 		t.Errorf("worker run failed %d", w.State)
 	}
 }
 
 func TestPacker(t *testing.T) {
+	buildrequest := new(models.Buildrequest)
+	Builds.Add(buildrequest)
+	buildnumber, _ := BuildResponses.Add(buildrequest.ID, new(models.Buildresponse))
 
-	var status string
 	packerconf := "testing/simple.json"
 	wq := make(chan chan *models.Buildrequest, 1)
-	w := NewWorker(1, wq)
-	br := new(models.Buildrequest)
+	w := NewCommandWorker(1, wq)
 
 	varA := new(models.Variable)
 	keyA := "empty"
@@ -74,18 +79,24 @@ func TestPacker(t *testing.T) {
 	varA.Key = &keyA
 	varA.Value = &valA
 
-	vars := append(br.Buildvars, varA)
+	vars := append(buildrequest.Buildvars, varA)
 
-	br.Templatepath = packerconf
+	buildrequest.Templatepath = packerconf
 
-	br.Buildvars = vars
-	err := w.RunPackerValidate(br)
-
-	if err != nil {
-		t.Errorf("worker run failed: %v: %s", err, br.Buildlog)
+	buildrequest.Buildvars = vars
+	merr := w.RunPackerValidate(buildrequest, buildnumber)
+	if merr != nil {
+		t.Errorf("error running packer: %v", merr)
 	}
 
-	if strings.Contains(status, "Failed") {
+	merr, resp := BuildResponses.LookupResponses(buildrequest.ID)
+
+	if resp == nil {
+		t.Error("worker got no response")
+		return
+	}
+
+	if strings.Contains(resp[buildnumber].Status, "Failed") {
 		t.Errorf("worker run failed %d", w.State)
 	}
 }

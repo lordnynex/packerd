@@ -2,11 +2,11 @@
     "variables": {
         "version": "{{env `version`}}",
         "http_proxy_schema": "{{env `http_proxy_schema`}}",
-        "http_proxy": "{{env `http_proxy`}}",
+        "http_proxy_server": "{{env `http_proxy_server`}}",
         "http_proxy_user": "{{env `http_proxy_user`}}",
         "http_proxy_pass": "{{env `http_proxy_pass`}}",
         "https_proxy_schema": "{{env `https_proxy_schema`}}",
-        "https_proxy": "{{env `https_proxy`}}",
+        "https_proxy_server": "{{env `https_proxy_server`}}",
         "https_proxy_user": "{{env `https_proxy_user`}}",
         "https_proxy_pass": "{{env `https_proxy_pass`}}",
         "ftp_proxy_schema": "{{env `ftp_proxy_schema`}}",
@@ -39,7 +39,7 @@
             "execute_command": "{{if .Sudo}}sudo {{end}}/opt/chef/bin/chef-solo --no-color -l {{user `chef_log_level`}} -c {{.ConfigPath}} -j {{.JsonPath}}",
             "data_bags_path": "provision/chef/data_bags",
             "roles_path": "provision/chef/roles",
-            "install_command": "export https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}; export http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}};  apt-get update; apt-get install -y curl; curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo -E{{end}} bash",
+            "install_command": "export https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy_server`}}; export http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy_server`}};  apt-get update; apt-get install -y curl; curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo -E{{end}} bash",
             "config_template": "chef.template",
             "run_list": [
                 "role[{{user `role`}}]"
@@ -59,8 +59,8 @@
                 "dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n"
             ],
             "environment_vars": [
-                "http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy`}}",
-                "https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy`}}",
+                "http_proxy={{user `http_proxy_schema`}}://{{user `http_proxy_user`}}:{{user `http_proxy_pass`}}@{{user `http_proxy_server`}}",
+                "https_proxy={{user `https_proxy_schema`}}://{{user `https_proxy_user`}}:{{user `https_proxy_pass`}}@{{user `https_proxy_server`}}",
                 "ftp_proxy={{user `ftp_proxy_schema`}}://{{user `ftp_proxy_user`}}:{{user `ftp_proxy_pass`}}@{{user `ftp_proxy`}}",
                 "no_proxy={{user `no_proxy`}}"
             ]
