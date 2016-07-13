@@ -3,15 +3,15 @@
 {{if .RolesPath}}role_path "{{.RolesPath}}"{{end}}
 {{if .DataBagsPath}}data_bag_path "{{.DataBagsPath}}"{{end}}
 
-{{if user `http_proxy`}}http_proxy "{{if user `http_proxy_schema`}}{{user `http_proxy_schema`}}://{{end}}{{user `http_proxy`}}"{{end}}
+{{if user `http_proxy_server`}}http_proxy "{{if user `http_proxy_schema`}}{{user `http_proxy_schema`}}://{{end}}{{user `http_proxy_server`}}"{{end}}
 {{if user `http_proxy_user`}}http_proxy_user "{{user `http_proxy_user`}}"{{end}}
 {{if user `http_proxy_pass`}}http_proxy_pass "{{user `http_proxy_pass`}}"{{end}}
 
-{{if user `https_proxy`}}https_proxy "{{if user `https_proxy_schema`}}{{user `https_proxy_schema`}}://{{end}}{{user `https_proxy`}}"{{end}}
+{{if user `https_proxy_server`}}https_proxy "{{if user `https_proxy_schema`}}{{user `https_proxy_schema`}}://{{end}}{{user `https_proxy_server`}}"{{end}}
 {{if user `https_proxy_user`}}https_proxy_user "{{user `https_proxy_user`}}"{{end}}
 {{if user `https_proxy_pass`}}https_proxy_pass "{{user `https_proxy_pass`}}"{{end}}
 
-{{if user `ftp_proxy`}}ftp_proxy "{{if user `ftp_proxy_schema`}}{{user `ftp_proxy_schema`}}://{{end}}{{user `ftp_proxy`}}"{{end}}
+{{if user `ftp_proxy_server`}}ftp_proxy "{{if user `ftp_proxy_schema`}}{{user `ftp_proxy_schema`}}://{{end}}{{user `ftp_proxy_server`}}"{{end}}
 {{if user `ftp_proxy_user`}}ftp_proxy_user "{{user `ftp_proxy_user`}}"{{end}}
 {{if user `ftp_proxy_pass`}}ftp_proxy_pass "{{user `ftp_proxy_pass`}}"{{end}}
 

@@ -27,8 +27,7 @@ file "/root/.berkshelf/config.json" do
   action :create
 end
 
-execute '/opt/chefdk/embedded/bin/gem install --no-user-install kitchen-docker' do
-  only_if do ! Dir.glob('/opt/chefdk/embedded/lib/ruby/gems/*/gems/kitchen-docker*').empty? end
+execute '/opt/chefdk/embedded/bin/gem install --no-user-install --no-rdoc --no-ri kitchen-docker kitchen-ansible' do
   action :run
 end
 

@@ -11,14 +11,14 @@ import (
 	"github.com/tompscanlan/packerd/models"
 )
 
-/*RunBuildAccepted Accepted the request. Returns a link to the queued build
+/*RunBuildAccepted Accepted the request. Returns a link to the queued buildresponse
 
 swagger:response runBuildAccepted
 */
 type RunBuildAccepted struct {
 
 	// In: body
-	Payload *models.Link `json:"body,omitempty"`
+	Payload []*models.Link `json:"body,omitempty"`
 }
 
 // NewRunBuildAccepted creates RunBuildAccepted with default headers values
@@ -27,13 +27,13 @@ func NewRunBuildAccepted() *RunBuildAccepted {
 }
 
 // WithPayload adds the payload to the run build accepted response
-func (o *RunBuildAccepted) WithPayload(payload *models.Link) *RunBuildAccepted {
+func (o *RunBuildAccepted) WithPayload(payload []*models.Link) *RunBuildAccepted {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the run build accepted response
-func (o *RunBuildAccepted) SetPayload(payload *models.Link) {
+func (o *RunBuildAccepted) SetPayload(payload []*models.Link) {
 	o.Payload = payload
 }
 
@@ -41,11 +41,10 @@ func (o *RunBuildAccepted) SetPayload(payload *models.Link) {
 func (o *RunBuildAccepted) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.WriteHeader(202)
-	if o.Payload != nil {
-		if err := producer.Produce(rw, o.Payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
+	if err := producer.Produce(rw, o.Payload); err != nil {
+		panic(err) // let the recovery middleware deal with this
 	}
+
 }
 
 /*RunBuildBadRequest generic error response

@@ -47,16 +47,20 @@ type PackerdAPI struct {
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
+	// InformationalGetBuildListHandler sets the operation handler for the get build list operation
+	InformationalGetBuildListHandler informational.GetBuildListHandler
+	// InformationalGetBuildListByIDHandler sets the operation handler for the get build list by Id operation
+	InformationalGetBuildListByIDHandler informational.GetBuildListByIDHandler
+	// InformationalGetBuildResponseByIDAndBuildNumberHandler sets the operation handler for the get build response by ID and build number operation
+	InformationalGetBuildResponseByIDAndBuildNumberHandler informational.GetBuildResponseByIDAndBuildNumberHandler
+	// InformationalGetBuildResponseByIDHandler sets the operation handler for the get build response by Id operation
+	InformationalGetBuildResponseByIDHandler informational.GetBuildResponseByIDHandler
+	// InformationalGetBuildStageByNameHandler sets the operation handler for the get build stage by name operation
+	InformationalGetBuildStageByNameHandler informational.GetBuildStageByNameHandler
+	// InformationalGetBuildStagesByIDBuildNumberHandler sets the operation handler for the get build stages by Id build number operation
+	InformationalGetBuildStagesByIDBuildNumberHandler informational.GetBuildStagesByIDBuildNumberHandler
 	// InformationalGetHealthHandler sets the operation handler for the get health operation
 	InformationalGetHealthHandler informational.GetHealthHandler
-	// InformationalGetPackerLogByIDHandler sets the operation handler for the get packer log by Id operation
-	InformationalGetPackerLogByIDHandler informational.GetPackerLogByIDHandler
-	// InformationalGetQueueHandler sets the operation handler for the get queue operation
-	InformationalGetQueueHandler informational.GetQueueHandler
-	// InformationalGetQueueByIDHandler sets the operation handler for the get queue by Id operation
-	InformationalGetQueueByIDHandler informational.GetQueueByIDHandler
-	// InformationalGetQueueTestLogByIDHandler sets the operation handler for the get queue test log by Id operation
-	InformationalGetQueueTestLogByIDHandler informational.GetQueueTestLogByIDHandler
 	// CommandRunBuildHandler sets the operation handler for the run build operation
 	CommandRunBuildHandler command.RunBuildHandler
 
@@ -70,6 +74,9 @@ type PackerdAPI struct {
 
 	// Custom command line argument groups with their descriptions
 	CommandLineOptionsGroups []swag.CommandLineOptionsGroup
+
+	// User defined logger function.
+	Logger func(string, ...interface{})
 }
 
 // SetDefaultProduces sets the default produces media type
@@ -114,24 +121,32 @@ func (o *PackerdAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
+	if o.InformationalGetBuildListHandler == nil {
+		unregistered = append(unregistered, "informational.GetBuildListHandler")
+	}
+
+	if o.InformationalGetBuildListByIDHandler == nil {
+		unregistered = append(unregistered, "informational.GetBuildListByIDHandler")
+	}
+
+	if o.InformationalGetBuildResponseByIDAndBuildNumberHandler == nil {
+		unregistered = append(unregistered, "informational.GetBuildResponseByIDAndBuildNumberHandler")
+	}
+
+	if o.InformationalGetBuildResponseByIDHandler == nil {
+		unregistered = append(unregistered, "informational.GetBuildResponseByIDHandler")
+	}
+
+	if o.InformationalGetBuildStageByNameHandler == nil {
+		unregistered = append(unregistered, "informational.GetBuildStageByNameHandler")
+	}
+
+	if o.InformationalGetBuildStagesByIDBuildNumberHandler == nil {
+		unregistered = append(unregistered, "informational.GetBuildStagesByIDBuildNumberHandler")
+	}
+
 	if o.InformationalGetHealthHandler == nil {
 		unregistered = append(unregistered, "informational.GetHealthHandler")
-	}
-
-	if o.InformationalGetPackerLogByIDHandler == nil {
-		unregistered = append(unregistered, "informational.GetPackerLogByIDHandler")
-	}
-
-	if o.InformationalGetQueueHandler == nil {
-		unregistered = append(unregistered, "informational.GetQueueHandler")
-	}
-
-	if o.InformationalGetQueueByIDHandler == nil {
-		unregistered = append(unregistered, "informational.GetQueueByIDHandler")
-	}
-
-	if o.InformationalGetQueueTestLogByIDHandler == nil {
-		unregistered = append(unregistered, "informational.GetQueueTestLogByIDHandler")
 	}
 
 	if o.CommandRunBuildHandler == nil {
@@ -214,27 +229,37 @@ func (o *PackerdAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
 	}
+	o.handlers["GET"]["/build/queue"] = informational.NewGetBuildList(o.context, o.InformationalGetBuildListHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/build/queue/{id}"] = informational.NewGetBuildListByID(o.context, o.InformationalGetBuildListByIDHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/build/responses/{id}/{buildnumber}"] = informational.NewGetBuildResponseByIDAndBuildNumber(o.context, o.InformationalGetBuildResponseByIDAndBuildNumberHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/build/responses/{id}"] = informational.NewGetBuildResponseByID(o.context, o.InformationalGetBuildResponseByIDHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/build/responses/{id}/{buildnumber}/stages/{stagename}"] = informational.NewGetBuildStageByName(o.context, o.InformationalGetBuildStageByNameHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/build/responses/{id}/{buildnumber}/stages"] = informational.NewGetBuildStagesByIDBuildNumber(o.context, o.InformationalGetBuildStagesByIDBuildNumberHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
+	}
 	o.handlers["GET"]["/health"] = informational.NewGetHealth(o.context, o.InformationalGetHealthHandler)
-
-	if o.handlers["GET"] == nil {
-		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
-	}
-	o.handlers["GET"]["/queue/{id}/buildlog"] = informational.NewGetPackerLogByID(o.context, o.InformationalGetPackerLogByIDHandler)
-
-	if o.handlers["GET"] == nil {
-		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
-	}
-	o.handlers["GET"]["/queue"] = informational.NewGetQueue(o.context, o.InformationalGetQueueHandler)
-
-	if o.handlers["GET"] == nil {
-		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
-	}
-	o.handlers["GET"]["/queue/{id}"] = informational.NewGetQueueByID(o.context, o.InformationalGetQueueByIDHandler)
-
-	if o.handlers["GET"] == nil {
-		o.handlers[strings.ToUpper("GET")] = make(map[string]http.Handler)
-	}
-	o.handlers["GET"]["/queue/{id}/testlog"] = informational.NewGetQueueTestLogByID(o.context, o.InformationalGetQueueTestLogByIDHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers[strings.ToUpper("POST")] = make(map[string]http.Handler)

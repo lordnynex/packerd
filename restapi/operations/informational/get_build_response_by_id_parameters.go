@@ -13,23 +13,23 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 )
 
-// NewGetQueueTestLogByIDParams creates a new GetQueueTestLogByIDParams object
+// NewGetBuildResponseByIDParams creates a new GetBuildResponseByIDParams object
 // with the default values initialized.
-func NewGetQueueTestLogByIDParams() GetQueueTestLogByIDParams {
+func NewGetBuildResponseByIDParams() GetBuildResponseByIDParams {
 	var ()
-	return GetQueueTestLogByIDParams{}
+	return GetBuildResponseByIDParams{}
 }
 
-// GetQueueTestLogByIDParams contains all the bound params for the get queue test log by Id operation
+// GetBuildResponseByIDParams contains all the bound params for the get build response by Id operation
 // typically these are obtained from a http.Request
 //
-// swagger:parameters getQueueTestLogById
-type GetQueueTestLogByIDParams struct {
+// swagger:parameters getBuildResponseById
+type GetBuildResponseByIDParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request
 
-	/*uuid for the build
+	/*uuid for the build request
 	  Required: true
 	  Max Length: 36
 	  Min Length: 36
@@ -40,7 +40,7 @@ type GetQueueTestLogByIDParams struct {
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
 // for simple values it will use straight method calls
-func (o *GetQueueTestLogByIDParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
+func (o *GetBuildResponseByIDParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
 	var res []error
 	o.HTTPRequest = r
 
@@ -55,7 +55,7 @@ func (o *GetQueueTestLogByIDParams) BindRequest(r *http.Request, route *middlewa
 	return nil
 }
 
-func (o *GetQueueTestLogByIDParams) bindID(rawData []string, hasKey bool, formats strfmt.Registry) error {
+func (o *GetBuildResponseByIDParams) bindID(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	var raw string
 	if len(rawData) > 0 {
 		raw = rawData[len(rawData)-1]
@@ -70,7 +70,7 @@ func (o *GetQueueTestLogByIDParams) bindID(rawData []string, hasKey bool, format
 	return nil
 }
 
-func (o *GetQueueTestLogByIDParams) validateID(formats strfmt.Registry) error {
+func (o *GetBuildResponseByIDParams) validateID(formats strfmt.Registry) error {
 
 	if err := validate.MinLength("id", "path", string(o.ID), 36); err != nil {
 		return err

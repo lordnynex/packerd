@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   description: REST interface to packer
   title: packerd
-  version: 0.0.1
+  version: 0.0.2
 consumes:
 - application/json
 produces:
@@ -26,53 +26,39 @@ paths:
             $ref: "#/definitions/buildrequest"
       responses:
         202:
-          description: Accepted the request. Returns a link to the queued build
-          schema:
-            $ref: "#/definitions/link"
-          examples:
-            application/json: |-
-              {
-                "link":
-                  {
-                    "rel": "self",
-                    "href": "/queue/{id}"
-                  }
-              }
-        400:
-          description: generic error response
-          schema:
-            $ref: "#/definitions/error"
-  /queue:
-    get:
-      description: get a list of links to all build status
-      operationId: getQueue
-      tags:
-        - informational
-      responses:
-        200:
-          description: list of links to the all queued builds
+          description: Accepted the request. Returns a link to the queued buildresponse
           schema:
             type: array
             items:
               $ref: "#/definitions/link"
-          examples:
-            application/json: |-
-              {
-                "link":
-                  {
-                    "rel": "self",
-                    "href": "/queue/{id}"
-                  }
-              }
+        400:
+          description: generic error response
+          schema:
+            $ref: "#/definitions/error"
+  /build/queue:
+    get:
+      description: get a list of links to all build requests
+      operationId: getBuildList
+      tags:
+        - informational
+      responses:
+        200:
+          description: list of links to the all build requests
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/link"
+        204:
+          description: no buildrequests exist
         400:
           description: generic error response
           schema:
             $ref: "#/definitions/error"
 
-  /queue/{id}:
+  /build/queue/{id}:
     get:
-      description: get status of a specific queued build request
-      operationId: getQueueById
+      description: get a specific build request
+      operationId: getBuildListById
       tags:
         - informational
       parameters:
@@ -92,11 +78,35 @@ paths:
           description: generic error response
           schema:
             $ref: "#/definitions/error"
-
-  /queue/{id}/buildlog:
+  /build/responses/{id}:
     get:
-      description: get the packer log of a specific queued build request
-      operationId: getPackerLogById
+      description: get all responses for this build id
+      operationId: getBuildResponseById
+      tags:
+        - informational
+      parameters:
+        - name: id
+          description: uuid for the build request
+          in: path
+          type: string
+          required: true
+          minLength: 36
+          maxLength: 36
+      responses:
+        200:
+          description: returns list of links to build responses for the build request id
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/link"
+        400:
+          description: generic error response
+          schema:
+            $ref: "#/definitions/error"
+  /build/responses/{id}/{buildnumber}:
+    get:
+      description: Get full detail of the response for a given build
+      operationId: getBuildResponseByIDAndBuildNumber
       tags:
         - informational
       parameters:
@@ -107,35 +117,82 @@ paths:
           required: true
           minLength: 36
           maxLength: 36
+        - name: buildnumber
+          description: Each buildrequest may be re-run, this identifies which run
+          in: path
+          type: int64
+          required: true
       responses:
         200:
-          description: returns a packer build log
+          description: returns a build status
           schema:
-            type: string
+              $ref: "#/definitions/buildresponse"
         400:
           description: generic error response
           schema:
             $ref: "#/definitions/error"
 
-  /queue/{id}/testlog:
+  /build/responses/{id}/{buildnumber}/stages:
     get:
-      description: get the kitchen test log from a specific queued build request
-      operationId: getQueueTestLogById
+      description: get all the stages of a specific build response
+      operationId: getBuildStagesByIdBuildNumber
       tags:
         - informational
       parameters:
         - name: id
-          description: uuid for the build
+          description: uuid for the response
           in: path
           type: string
           required: true
           minLength: 36
           maxLength: 36
+        - name: buildnumber
+          description: Each buildrequest may be re-run, this identifies which run
+          in: path
+          type: int64
+          required: true
       responses:
         200:
-          description: returns the test kitchen run log
+          description: list of links to the all stages
           schema:
-            type: string
+            type: array
+            items:
+              $ref: "#/definitions/link"
+        400:
+          description: generic error response
+          schema:
+            $ref: "#/definitions/error"
+  /build/responses/{id}/{buildnumber}/stages/{stagename}:
+    get:
+      description: get all the stages of a specific build response
+      operationId: getBuildStageByName
+      tags:
+        - informational
+      parameters:
+        - name: id
+          description: uuid for the response
+          in: path
+          type: string
+          required: true
+          minLength: 36
+          maxLength: 36
+        - name: buildnumber
+          description: Each buildrequest may be re-run, this identifies which run
+          in: path
+          type: int64
+          required: true
+        - name: stagename
+          description: name of the stage
+          in: path
+          type: string
+          required: true
+          minLength: 1
+          maxLength: 64         
+      responses:
+        200:
+          description: detail of specific stage
+          schema:
+            $ref: "#/definitions/buildstage"
         400:
           description: generic error response
           schema:
@@ -183,6 +240,40 @@ definitions:
         format: int64
       message:
         type: string
+  buildresponse:
+    type: object
+    properties:
+      buildrequestid:
+        type: string
+        description: uuid of the build request triggering this response
+      id:
+        type: string
+        description: uuid of this response
+      buildstages:
+        type: array
+        items:
+          $ref: "#/definitions/buildstage"
+      buildrequest:
+        description: link to the build request
+        items:
+          $ref: "#/definitions/link"
+      images:
+        description: local image ids
+        type: array
+        items:
+          type: string
+      artifacts:
+        description: url to remote artifact
+        type: array
+        items:
+          $ref: "#/definitions/link"
+      status:
+        description: status of the build
+        type: string
+      eta:
+        description: estimated seconds from now that the build will be completed.  Used to direct when you should check back
+        type: integer
+        format: int32
   buildrequest:
     required:
       - giturl
@@ -204,30 +295,39 @@ definitions:
       branch:
         description: git branch checkout
         type: string
-      commit:
-        description: git commit to checkout
-        type: string
-      buildlog:
-        description: build log file
-        type: string
-      testlog:
-        description: build log file
-        type: string
-      images:
-        description: links to artifacts
-        type: array
-        items:
-          $ref: "#/definitions/link"
-      status:
-        description: status of the build
-        type: string
-      eta:
-        description: estimated seconds from now that the build will be completed.  Used to direct when you should check back
-        type: integer
-        format: int32
       localpath:
         description: not settable
         type: string
+      responses:
+        description: list of response ids generated for this build, a build that is retried may have more than one response
+        type: array
+        items:
+          type: string
+      responselinks:
+        description: links to build responses
+        type: array
+        items:
+          $ref: "#/definitions/link"
+  buildstage:
+    type: object
+    properties:
+      name:
+        type: string
+      status:
+        type: string
+        enum:
+          - pending
+          - running
+          - failed
+          - complete
+      log:
+        type: string
+      start:
+        type: string
+        format: date-time
+      end:
+        type: string
+        format: date-time
   link:
     type: object
     readOnly: true
@@ -239,6 +339,16 @@ definitions:
         format: url
   health:
     type: object
+    required:
+      - status
+      - diskpercentfull
     properties:
       status:
         type: string
+      diskpercentfull:
+        type: integer
+        format: int
+      goroutines:
+        type: integer
+        format: uint64
+

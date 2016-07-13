@@ -10,7 +10,7 @@ import (
 
 func TestNewBuildQueue(t *testing.T) {
 
-	bq := NewBuildQueue()
+	bq := NewBuildMap()
 	br := new(models.Buildrequest)
 
 	id, _ := bq.Add(br)
@@ -31,8 +31,8 @@ func TestNewBuildQueue(t *testing.T) {
 		t.Errorf("expected 0 key, found %d", n)
 	}
 
-	badId := "asd123"
-	err := bq.Delete(badId)
+	badID := "asd123"
+	err := bq.Delete(badID)
 	if err == nil {
 		t.Errorf("expected to hit an error, but didn't")
 	}
@@ -42,12 +42,13 @@ func TestNewLookupBuildQueue(t *testing.T) {
 
 	status := "New Test"
 	giturl := "http://github.com/tompscanlan/packerd"
-	badId := "asd123"
-	nonExistId := "b7aa6044-bbde-415c-89e2-7833d4e544dc"
+	badID := "asd123"
+	nonExistID := "b7aa6044-bbde-415c-89e2-7833d4e544dc"
 
-	bq := NewBuildQueue()
+	bq := NewBuildMap()
 	br := new(models.Buildrequest)
-	br.Status = status
+	bresp := new(models.Buildresponse)
+	bresp.Status = status
 	br.Giturl = &giturl
 
 	id, err := bq.Add(br)
@@ -70,17 +71,17 @@ func TestNewLookupBuildQueue(t *testing.T) {
 		t.Errorf("lookup giturl should have been %q, but found %q", id, found.Giturl)
 	}
 
-	_, err = bq.LookUp(badId)
+	_, err = bq.LookUp(badID)
 	if err == nil {
 		t.Errorf("missing an expected error")
 	}
 
-	err = bq.Delete(nonExistId)
+	err = bq.Delete(nonExistID)
 	if err != nil {
 		t.Errorf("got an unexpected error: %q", err)
 	}
 
-	found, err = bq.LookUp(nonExistId)
+	found, err = bq.LookUp(nonExistID)
 	if err == nil {
 		t.Errorf("missing an expected error")
 	}
@@ -89,7 +90,7 @@ func TestNewLookupBuildQueue(t *testing.T) {
 
 func TestStoreLoadBuildQueue(t *testing.T) {
 
-	bq := NewBuildQueue()
+	bq := NewBuildMap()
 	var ids []string
 	recs := 1000
 
@@ -132,7 +133,7 @@ func TestStoreLoadBuildQueue(t *testing.T) {
 
 func BenchmarkLotsOfRequests(b *testing.B) {
 
-	bq := NewBuildQueue()
+	bq := NewBuildMap()
 	var ids []string
 
 	for n := 0; n < b.N; n++ {
@@ -143,7 +144,7 @@ func BenchmarkLotsOfRequests(b *testing.B) {
 }
 func BenchmarkDeleteLotsOfRequests(b *testing.B) {
 
-	bq := NewBuildQueue()
+	bq := NewBuildMap()
 	var ids []string
 
 	for n := 0; n < b.N; n++ {

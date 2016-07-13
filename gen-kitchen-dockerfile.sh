@@ -2,7 +2,7 @@
 
 out=kitchen-dockerfile
 
-echo "FROM dockyardaws.cloud.capitalone.com/tompscanlan/packerd" > $out
+echo "FROM tompscanlan/packerd" > $out
 if [ -n $http_proxy ]; then echo "ENV http_proxy $http_proxy" >> $out; fi
 if [ -n $https_proxy ]; then echo "ENV https_proxy $https_proxy" >> $out; fi
 echo "ENV DEBIAN_FRONTEND noninteractive" >> $out
